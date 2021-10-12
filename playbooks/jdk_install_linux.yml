@@ -1,0 +1,12 @@
+---
+    - hosts: "{{ host_name }}"
+      user: ansible
+      become: yes
+      connection: ssh
+      gather_facts: yes
+     
+      tasks:
+      - import_role:
+         name: "{{ playbook_dir }}/../roles/vertex_required_linux" 
+      - import_role:
+         name: "{{ playbook_dir }}/../roles/jdk_linux"

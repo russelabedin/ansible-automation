@@ -1,0 +1,125 @@
+---
+
+- name: set std filepath
+  set_fact: stdFile=""
+- name: set lease filepath
+  set_fact: leaseFile=""
+- name: set telecom filepath
+  set_fact: telecomFile=""
+
+
+- name: Powershell Script to get latest MDU
+  win_shell: |
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+    $HttpContent = Invoke-WebRequest -URI {{ vertex_mdu_url }}
+    $HttpContent.Links | Where-Object {$_.href -like "release*"} | Select-Object -Last 1  | fl innerText
+  register: mdu_release
+
+- name: print powershell output
+  debug:
+    msg: "The latest mdu is: {{ mdu_release.stdout.split('release')[1].split('.')[0] }}"
+
+- name: set mdu release variable
+  set_fact: mdu_release="{{ mdu_release.stdout.split("release")[1].split(".")[0] }}"
+
+
+- name: Powershell Script Check if MDU has already been applied
+  win_shell: |
+    cd C:\vertex\oseries\bin
+    $output = .\runVersion.bat
+    $newOutput = $output | Select-String -Pattern 'tps:' -CaseSensitive -SimpleMatch
+    $newOutput -replace '\D+'
+  register: mdu_installed
+
+- name: print powershell output
+  debug:
+    msg: "Current mdu that is applied {{ mdu_installed.stdout_lines }}"
+
+- name: set mdu_install variable
+  set_fact: mdu_install_flag="false"
+  when: mdu_installed.stdout_lines|length>0
+
+- name: set std url
+  set_fact: stdZip="{{ vertex_mdu_url }}/release{{ mdu_release }}.00%20{{ oseries_version }}.0/std/full/vertexoseries{{ oseries_version }}0_{{ mdu_release }}f.zip"
+
+- name: set lease  url
+  set_fact: leaseZip="{{ vertex_mdu_url }}/release{{ mdu_release }}.00%20{{ oseries_version }}.0/lease/full/vertexoserieslease{{ oseries_version }}0_{{ mdu_release }}f.zip"
+
+- name: set telecom url
+  set_fact: telecomZip="{{ vertex_mdu_url }}/release{{ mdu_release }}.00%20{{ oseries_version }}.0/telecom/full/vertexoseriestelecom{{ oseries_version }}0_{{ mdu_release }}f.zip"
+
+- name: set dev url
+  set_fact: devZip="{{ vertex_mdu_url }}/release{{ mdu_release }}.00%20{{ oseries_version }}.0/dev/full/developmentbuild{{ oseries_version }}0_{{ mdu_release }}f.zip"
+
+
+- name: "Download MDU STD Zip File"
+  win_get_url:
+    url: "{{ stdZip }}"
+    dest: "{{ oseries_home }}/dataupdate/"
+    force: no
+  when:
+    - '"std" in mdu_directories|lower'
+    - mssql_version is not defined
+
+- name: "Download MDU lease Zip File"
+  win_get_url:
+    url: "{{ leaseZip }}"
+    dest: "{{ oseries_home }}/dataupdate/"
+    force: no
+  when:
+    - '"lease" in mdu_directories|lower'
+    - mssql_version is not defined
+
+- name: "Download MDU telecom Zip File"
+  win_get_url:
+    url: "{{ telecomZip }}"
+    dest: "{{ oseries_home }}/dataupdate/"
+    force: no
+  when:
+    - '"telecom" in mdu_directories|lower'
+    - mssql_version is not defined
+
+- name: "Download dev Zip File"
+  win_get_url:
+    url: "{{ devZip }}"
+    dest: "{{ oseries_home }}/dataupdate/"
+    force: no
+  when: mssql_version is defined
+
+
+- block:
+
+  # Installing regular MDU is commented out to bring Windows behavior in alignment with Linus (see SYS-1540)
+  # Until the user has an option in the Self-Service Portal to choose whether the MDU should be loaded as part
+  # of the deployment, the MDU load will not be done as part of the deployment.
+  #
+  # - name: set std filepath
+  #   set_fact: stdFile="{{ oseries_home }}/dataupdate/vertexoseries{{ oseries_version }}0_{{ mdu_release }}f.zip"
+  #   when: '"std" in mdu_directories|lower'
+  # - name: set lease  filepath
+  #   set_fact: leaseFile="{{ oseries_home }}/dataupdate/vertexoserieslease{{ oseries_version }}0_{{ mdu_release }}f.zip"
+  #   when: '"lease" in mdu_directories|lower'
+  # - name: set telecom filePath
+  #   set_fact: telecomFile="{{ oseries_home }}/dataupdate/vertexoseriestelecom{{ oseries_version }}0_{{ mdu_release }}f.zip"
+  #   when: '"telecom" in mdu_directories|lower'
+
+  # - name: "run regular update"
+  #   win_shell: runDataUpdate -u sysadmin -p vertex {{ stdFile }} {{ leaseFile }} {{ telecomFile }}
+  #   args:
+  #     executable: cmd
+  #     chdir:  C:\vertex\oseries\bin\
+  # #  async: 45
+  # #  poll: 0
+  #   when: mssql_version is not defined
+
+  - name: set dev filePath
+    set_fact: devFile="developmentbuild{{ oseries_version }}0_{{ mdu_release }}f.zip"
+
+  - name: "run update with bulkloader"
+    win_shell: bulkloader jdbc:sqlserver://localhost:1433;DatabaseName=oseries;user=oseries;password=oseries {{ devFile }} C:\vertex\oseries
+    args:
+      executable: cmd
+      chdir:  "{{ oseries_home }}\\dataupdate"
+    when: mssql_version is defined
+
+  when: mdu_install_flag == "true"

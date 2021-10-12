@@ -1,0 +1,62 @@
+---
+
+- name: Lookup Current JDK install 
+  win_stat:
+    path: "{{ jdk_install_dir }}\\bin\\java.exe"
+  register: jdk_bin_install
+
+- name: Print Current JDK
+  debug: 
+    msg: "Current JDK Install is {{ jdk_bin_install.stat.exists }}"
+
+- block:
+
+  - name: "Download a Windows .msi file from the Downloads page."
+    win_get_url:
+      url: "{{ vertex_repo_url }}/{{ jdk_repo_base }}/{{ jdk_pkg }}"
+      dest: "{{ vertex_tmp_dir }}/"
+      force: no
+
+  - name: "Unzip JDK Package."
+    win_unzip:
+      src: "{{ vertex_tmp_dir }}/{{ jdk_pkg }}"
+      dest: "{{ vertex_java_base }}"
+  #    delete_archive: yes
+
+  - name: "Set JAVA_HOME to the installation location"
+    win_environment:
+      state: present
+      name: JAVA_HOME
+      value: "{{ jdk_install_dir }}"
+      level: machine
+
+  - name: "Ensure JAVA_HOME PATH is set"
+    win_path:
+      elements:
+      - '%JAVA_HOME%\bin'
+
+  when: jdk_bin_install.stat.exists == False
+
+- name: Run Java Version Check
+  win_shell: (Get-Command java | Select-Object -ExpandProperty Version).toString()  
+  args:
+    chdir: "{{ jdk_install_dir }}\\bin"
+  register: java_version
+  changed_when: java_version.rc != 0
+  # notify: reboot server
+
+- name: reboot server
+  win_reboot:
+    msg: Reboot initiated by Ansible
+    post_reboot_delay: 300
+  register: reboot
+  when: mssql_version is undefined and jdk_bin_install.stat.exists == False
+
+- name: Print Java Version
+  debug:
+    msg: "Java installation verified running version : {{ java_version.stdout | trim }}"
+
+- name: Fail if not return version
+  fail: 
+    msg: "ERROR: Java version not detected"
+  when: java_version is undefined

@@ -1,0 +1,53 @@
+---
+
+# ==> Set facts for Artifactory location
+- name: Overridding of vars from common
+  set_fact:
+    db_version: Oracle
+    vertex_repo_url: 'http://binrepo.cst.vertexinc.com:80/artifactory/software-remote'
+    key_value: "" # this line is simply a workaround to mute an error msg. See https://github.com/VSChina/vscode-ansible/issues/261
+
+# ==> Set facts for Oracle 12.2 version
+- name: Setting Oracle 12.2 Facts
+  set_fact:
+    ORACLE_HOME: "{{ ORACLE_BASE }}/product/12.2.0/dbhome_1"
+    oracle_installer_location: "{{ linux_tmp_dir }}/database"
+    ora_repo_base_dir: "database/oracle/ORA12/linux"
+    oracle_install_pkg: linuxx64_12201_database.zip
+    oracle_database_already_installed: false
+    oracle_release: '12.2.0.1'
+    oracle_install_rsp: 'db-install-{{ oracle_version }}.rsp.j2'
+    oracle_dbca_rsp: 'dbca-db-create-{{ oracle_version }}.rsp.j2'
+    oracle_netca_rsp: 'netca-{{ oracle_version }}.rsp.j2'    
+    key_value: "" # this line is simply a workaround to mute an error msg. See https://github.com/VSChina/vscode-ansible/issues/261
+  when: oracle_version == '12.2'
+
+# ==> Set facts for Oracle 18.3 version
+- name: Setting Oracle 18.3 Facts
+  set_fact:
+    ORACLE_HOME: "{{ ORACLE_BASE }}/product/18.3.0/dbhome_1"
+    oracle_installer_location: "{{ linux_tmp_dir }}/database"
+    ora_repo_base_dir: "database/oracle/oracle18c"
+    oracle_install_pkg: LINUX.X64_183000_db_home.zip
+    oracle_database_already_installed: false
+    oracle_release: '18.3.0.0'
+    oracle_install_rsp: 'db-install-{{ oracle_version }}.rsp.j2'
+    oracle_dbca_rsp: 'dbca-db-create-{{ oracle_version }}.rsp.j2'
+    oracle_netca_rsp: 'netca-{{ oracle_version }}.rsp.j2'    
+    key_value: "" # this line is simply a workaround to mute an error msg. See https://github.com/VSChina/vscode-ansible/issues/261
+  when: oracle_version == '18.3'
+
+# ==> Set facts for Oracle 18.3 version
+- name: Setting Oracle 19.3 Facts
+  set_fact:
+    ORACLE_HOME: "{{ ORACLE_BASE }}/product/19.3.0/dbhome_1"
+    oracle_installer_location: "{{ ORACLE_BASE }}/product/19.3.0/dbhome_1"
+    ora_repo_base_dir: "database/oracle/oracle19c"
+    oracle_install_pkg: LINUX.X64_193000_db_home.zip
+    oracle_database_already_installed: false
+    oracle_release: '19.3.0.0'
+    oracle_install_rsp: 'db-install-{{ oracle_version }}.rsp.j2'
+    oracle_dbca_rsp: 'dbca-db-create-{{ oracle_version }}.rsp.j2'
+    oracle_netca_rsp: 'netca-{{ oracle_version }}.rsp.j2'
+    key_value: "" # this line is simply a workaround to mute an error msg. See https://github.com/VSChina/vscode-ansible/issues/261
+  when: oracle_version == '19.3'

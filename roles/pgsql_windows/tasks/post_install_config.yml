@@ -1,0 +1,45 @@
+---
+
+# Copying Postgresql.conf file on server to change DB configuration
+- name: "Copying Postgresql.conf file on server"
+  win_template:
+    src: postgresql.conf.j2
+    dest: '{{ PGDATA }}\postgresql.conf'
+
+# Copying pg_hba.conf file on server to change DB user authentication configuration
+- name: "Copying DB Login Creation SQL file on server"
+  win_template:
+    src: pg_hba.conf.j2
+    dest: '{{ PGDATA }}\pg_hba.conf'
+
+# Copying SQL file on server to create OSeries database on postgres
+- name: "Copying DB Creation SQL file on server"
+  win_copy:
+    src: postgres_create_db_script.sql
+    dest: '{{ vertex_tmp_dir }}\postgres_create_db_script.sql'
+
+# Copying SQL file on server to create OSeries login on postgres
+- name: "Copying DB Login Creation SQL file on server"
+  win_copy:
+    src: postgres_create_user_oseries_script.sql
+    dest: '{{ vertex_tmp_dir }}\postgres_create_user_oseries_script.sql'
+
+#Copying Bat file on server which will create Oseries database and Login
+- name: "Copying DB Configure bat file"
+  win_template: 
+    src: configure_postgres_database.bat.choco
+    dest: '{{ vertex_tmp_dir }}\configure_postgres_database.bat'
+
+#Executing Bat file which will create Oseries database and Login on Postgres
+- name: "Executing the Postgres Install bat script"
+  win_shell: '{{ vertex_tmp_dir }}\configure_postgres_database.bat'
+  args:
+    executable: cmd
+    become: true
+    become_user: cstadmin
+    become_method: runas
+
+- name: Restart a PostgreSQL service
+  win_service:
+    name: postgresql-x64-{{pgsql_version}}
+    state: restarted

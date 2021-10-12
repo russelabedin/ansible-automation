@@ -1,0 +1,51 @@
+---
+  - name: Check that temp files from previous run were removed 
+    win_file:
+      path: '{{ item }}'
+      state: absent
+    with_items:
+      - "{{ temp_backup_path }}\\{{ backup_file_name }}.dmp"
+      - "{{ temp_backup_path }}\\{{ db_name }}.log"
+      - "{{ script_path }}"
+
+  - name: Create temp directory
+    win_file:
+      path: "{{ temp_backup_path }}"
+      state: directory
+
+  - name: Create file for sqlcript
+    win_file:
+      path: "{{ script_path }}"
+      state: touch
+
+  - name: Insert script
+    win_lineinfile:
+      path: "{{ script_path }}"
+      state: present
+      line: "create or replace directory data_pump_dir_pdb as '{{ temp_backup_path }}';\r\nexit;"
+
+  - name: Create directory to perform expdp
+    win_shell: "sqlplus {{ ora_db_admin }}/{{ ora_db_admin_pass }} @{{ script_path }}"
+
+  - name: Create dump file
+    win_shell: "expdp {{ ora_db_admin }}/{{ ora_db_admin_pass }}@{{ ora_service_name }} exclude=statistics schemas={{ db_name }} directory=data_pump_dir_pdb dumpfile={{ backup_file_name }}.dmp logfile={{ db_name }}.log"
+
+  - name: Copy backup file from local drive to a network share
+    win_copy:
+      remote_src: yes
+      src: "{{ temp_backup_path }}\\{{ backup_file_name }}.dmp"
+      dest: "{{ backup_path }}\\"
+    become: yes
+    become_user: "{{ fs_login }}"
+    become_method: runas
+    vars:
+      ansible_become_password: "{{ fs_pass }}"
+
+  - name: Cleanup temp directory
+    win_file:
+      path: "{{ item }}"
+      state: absent
+    with_items:
+      - "{{ temp_backup_path }}\\{{ backup_file_name }}.dmp"
+      - "{{ temp_backup_path }}\\{{ db_name }}.log"
+      - "{{ script_path }}"

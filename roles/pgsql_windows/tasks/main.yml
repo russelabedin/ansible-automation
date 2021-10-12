@@ -1,0 +1,34 @@
+---
+
+#set_facts.yml to decide PostgreSQL Version to install  
+- name: Setting Postgres Facts
+  include: set_facts.yml
+  when: pgsql_version is defined
+
+# CSTI uses C:\temp\devops as its standard 'temp dir'
+- name: Ensure devops Directory
+  win_file:
+    path: C:\temp\devops
+    state: directory
+
+# Creating Database Software installation Directory
+- name: Ensure Postgres installation directory
+  win_file:
+    path: '{{ PREFIX }}'
+    state: directory
+
+# Creating Database Data Directory
+- name: Ensure Postgres Data directory
+  win_file:
+    path: '{{ PGDATA }}'
+    state: directory
+
+# Database software installation
+- name: "Installing Postgres"
+  include: install_postgres.yml
+  register: postgres_db_installed
+
+# Creating Oseries Database and Oseries login
+- name: "Configure Oseries Database"
+  include: post_install_config.yml
+  register: oseries_db_configured

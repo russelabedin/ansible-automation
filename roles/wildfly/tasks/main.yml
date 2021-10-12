@@ -1,0 +1,33 @@
+  
+---
+    # Install Wildfly 
+    - name: "Check to see if WildFly is installed"
+      win_stat:
+        path: "{{ wildfly_install_base }}\\{{ wildfly_dir }}"
+      register: if_exist_result
+
+      
+    - name: Check if port 8080 is listening
+      win_wait_for:
+        port: 8080
+        state: stopped
+        delay: 5
+        timeout: 10
+        msg: "Timeout waiting for 8080 to respond"
+      register: port_check
+      ignore_errors: no
+ 
+    
+    - include: install.yml
+      when: not if_exist_result.stat.exists
+
+    - name: "Copying custom Wildfly configuration file to local system - Windows"
+      win_template:
+        src: "{{ wildfly_custom_config }}.j2"
+        dest: "{{ wildfly_install_base }}\\{{ wildfly_dir }}\\standalone\\configuration\\{{ wildfly_custom_config }}"
+        backup: yes
+    
+    - include: configure.yml
+      when: not if_exist_result.stat.exists
+    
+    - include: artifact.yml

@@ -1,0 +1,23 @@
+---
+wildfly_repo_base_dir: https://binrepo.vtxdev.net/artifactory/software-local/AppServers/wildfly/
+wildfly_package: wildfly-17.0.0.Final.zip
+wildfly_install_base: C:\DeploymentUnit
+wildfly_dir: wildfly-17.0.0.Final
+wildfly_oseries_war_dir: C:\vertex\oseries\web
+wildfly_custom_config: standalone.xml
+
+# The variables below will be needed to deploy O Series in Wildfly
+# oseries_war_files:
+#   - oseries-auth.war  
+#   - oseries-help.war  
+#   - oseries-ui-service.war  
+#   - oseries-ui.war  
+#   - vertex-ec.war  
+#   - vertex-remote-services.war  
+#   - vertex-ws.war
+# oseries_wars_to_update:
+#   - oseries-auth
+#   - oseries-ui-service 
+#   - vertex-remote-service
+#   - vertex-ec
+#   - vertex-ws

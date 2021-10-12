@@ -1,0 +1,41 @@
+---
+# Copy oseries database creation script to server
+# Create oseries user to own the oseries database
+# Execute the oseries create database script and set owner to oseries
+
+- name: "Copying the create db script file"
+  win_template:
+    src: templates/oracle_create_db_script.sql.j2
+    dest: '{{ vertex_tmp_dir }}\oracle_create_db_script.sql'
+
+- name: "Copying the create db user script file"
+  win_template:
+    src: files/oracle_create_user_oseries_script.sql
+    dest: '{{ vertex_tmp_dir }}\oracle_create_user_oseries_script.sql'
+
+- name: "Create Oseries db"
+  win_shell: |
+    {{ ORACLE_HOME }}\bin\sqlplus -s "/ as SYSDBA" @{{ vertex_tmp_dir }}\oracle_create_db_script.sql
+  register: sql_output
+  become: true
+  become_user: cstadmin
+  become_method: runas
+
+- name: display the sql output for Create Oseries db
+  debug:
+    msg: "{{ sql_output.stdout_lines }}"
+    verbosity: 3
+
+- name: "Create the oseries db user"
+  win_shell: |
+    {{ ORACLE_HOME }}\bin\sqlplus -s "/ as SYSDBA" @{{ vertex_tmp_dir }}\oracle_create_user_oseries_script.sql
+  register: create_oseries_sql_output
+  become: true
+  become_user: cstadmin
+  become_method: runas
+
+- name: display the sql output for Create Oseries db
+  debug:
+    msg: "{{ create_oseries_sql_output.stdout_lines }}"
+    verbosity: 3
+

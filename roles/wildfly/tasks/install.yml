@@ -1,0 +1,13 @@
+---
+    # Install Wildfly 
+    #
+    - name: "Downloading {{ wildfly_package }}"
+      win_get_url:
+        url: "{{ wildfly_repo_base_dir }}/{{ wildfly_package }}"
+        dest: "{{ vertex_tmp_dir }}\\"
+    
+    - name: "Uncompressing {{ wildfly_package }}"
+      win_unzip:
+        src: '{{ vertex_tmp_dir  }}\{{ wildfly_package }}'
+        dest: "{{ wildfly_install_base }}\\"
+        delete_archive: yes

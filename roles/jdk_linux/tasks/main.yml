@@ -1,0 +1,45 @@
+---
+    # Install Amazon Corretto JDK on Linux Systems 
+
+    - name:
+      include: set_facts.yml
+      when: jdk_version is defined
+
+    - name: "Check to see if JDK is installed"
+      stat: 
+        path: "{{ jdk_install_dir }}/{{ jdk_pkg }}/"
+      register: if_exist_result
+    
+    - name: "Downloading Oracle JDK package {{ oracle_jdk_package }}"
+      get_url:
+        url: "{{ jdk_url }}"
+        dest: "{{ linux_tmp_dir }}/"
+        mode: 0775
+      when: not if_exist_result.stat.exists
+    
+    - name: "Installing Oracle JDK package {{ oracle_jdk_package }}"
+      unarchive:
+        src: "{{ linux_tmp_dir }}/{{ jdk_pkg }}.tar.gz"
+        dest: "{{ jdk_install_dir }}/" 
+        remote_src: yes
+      when: not if_exist_result.stat.exists
+
+    - name: Ensure virtualenv is sourced from the .bashrc
+      blockinfile:
+        dest: "{{ ansible_env.HOME }}/.bashrc"
+        block: |
+          export JAVA_HOME={{ jdk_install_dir }}{{ jdk_pkg}}
+          export PATH=$JAVA_HOME/bin:$PATH
+        marker: '# {mark} ANSIBLE MANAGED BLOCK - virtualenv'
+        insertbefore: BOF
+        create: yes 
+
+    - name: Ensure virtualenv is sourced from the .bashrc for "stetester" user 
+      blockinfile:
+        dest: "/home/stetester/.bashrc"
+        block: |
+          export JAVA_HOME={{ jdk_install_dir }}{{ jdk_pkg}}
+          export PATH=$JAVA_HOME/bin:$PATH
+        marker: '# {mark} ANSIBLE MANAGED BLOCK - virtualenv'
+        insertbefore: BOF
+        create: yes

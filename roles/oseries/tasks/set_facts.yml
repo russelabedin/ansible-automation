@@ -1,0 +1,12 @@
+---
+- name: Setting Oseries Install against Oracle db Fact
+  set_fact:
+    o_series_install_properties: win_oracle_amazon-jdk_O9_install.properties
+    key_value: "" # this line is simply a workaround to mute an error msg. See https://github.com/VSChina/vscode-ansible/issues/261
+  when: oracle_version is defined
+
+- name: Setting Oseries Install against PostgreSQL db Fact
+  set_fact:
+    o_series_install_properties: win_pgsql_amazon-jdk_O9_install.properties
+    key_value: "" # this line is simply a workaround to mute an error msg. See https://github.com/VSChina/vscode-ansible/issues/261
+  when: pgsql_version is defined

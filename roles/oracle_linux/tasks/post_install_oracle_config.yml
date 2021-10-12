@@ -1,0 +1,53 @@
+---
+
+# ==> Copying tablespace creation script on target host
+- name: "Copying O Series tablespace creation script to installation directory"
+  copy: 
+    src: oracle_create_tablespace_script.sql 
+    dest: '{{ linux_tmp_dir }}/oracle_create_tablespace_script.sql'
+    owner: "{{ oracle_username }}"
+    group: oinstall 
+    mode: 0777
+
+# ==> Copying db user creation script on target host
+- name: "Copying O Series database user creation script to installation directory"
+  copy: 
+    src: oracle_create_user_oseries_script.sql 
+    dest: '{{ linux_tmp_dir }}/oracle_create_user_oseries_script.sql'
+    owner: "{{ oracle_username }}"
+    group: oinstall 
+    mode: 0777
+
+# ==> Creating oseries tablespace 
+- name: "Creating Oseries big file tablespace"
+  shell: echo exit | {{ ORACLE_HOME }}/bin/sqlplus -s "/ as SYSDBA" @{{ linux_tmp_dir }}/oracle_create_tablespace_script.sql
+  environment:
+        ORACLE_HOME: "{{ ORACLE_HOME }}"
+        ORACLE_SID: "{{ db_sid }}"
+        PATH: "{{ ORACLE_HOME }}/bin"
+        LD_LIBRARY_PATH: "{{ ORACLE_HOME }}/lib"
+  register: sql_output
+  become: true
+  become_user: "{{ oracle_username }}"
+
+- name: display the sql output for Create Oseries tablespace
+  debug:
+    msg: "{{ sql_output.stdout_lines }}"
+    verbosity: 3
+
+# ==> Creating oseries user
+- name: "Creating the oseries db user"
+  shell: echo exit | {{ ORACLE_HOME }}/bin/sqlplus -s "/ as SYSDBA" @{{ linux_tmp_dir }}/oracle_create_user_oseries_script.sql
+  environment:
+        ORACLE_HOME: "{{ ORACLE_HOME }}"
+        ORACLE_SID: "{{ db_sid }}"
+        PATH: "{{ ORACLE_HOME }}/bin"
+        LD_LIBRARY_PATH: "{{ ORACLE_HOME }}/lib"  
+  register: create_oseries_sql_output
+  become: true
+  become_user: "{{ oracle_username }}"
+  
+- name: display the sql output for Create Oseries db
+  debug:
+    msg: "{{ create_oseries_sql_output.stdout_lines }}"
+    verbosity: 3

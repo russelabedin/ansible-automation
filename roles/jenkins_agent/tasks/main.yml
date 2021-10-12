@@ -1,0 +1,16 @@
+---
+
+- name: "Installing Jenkins Packages"
+  win_chocolatey:
+    name: "{{ item.name }}"
+    state: "{{ jenkins_pkg_state }}"
+    version: "{{ item.version }}"
+  with_items:
+    - "{{ jenkins_pkgs }}"
+  register: package_installed
+
+- name: Reboot Server    
+  win_reboot:
+    msg: Reboot initiated by Package Update
+    post_reboot_delay: 300
+  when: package_installed.changed

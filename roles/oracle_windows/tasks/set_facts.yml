@@ -1,0 +1,87 @@
+---
+
+- name: Override of vars from common
+  set_fact:
+    db_version: Oracle
+    vertex_repo_url: 'http://binrepo.cst.vertexinc.com:80/artifactory/software-remote'
+    key_value: "" # this line is simply a workaround to mute an error msg. See https://github.com/VSChina/vscode-ansible/issues/261
+
+
+- name: Setting Oracle 12.2 Facts
+  set_fact:
+    oracle_version_product: 12.2.0
+    # ORACLE_INVENTORY: is the location on the server of the oracle inventory
+    # ORACLE_INVENTORY: 'C:\Program Files\Oracle\Inventory'
+    # ORACLE_HOME: is the path where the binaries will be installed
+    ORACLE_HOME: "C:\\app\\{{ oracle_username }}\\product\\12.2.0\\dbhome_1"
+    # ORACLE_BASE: is the location of the ORACLE_BASE where the diag directory and many more will be located
+    ORACLE_BASE: 'C:\app\{{ oracle_username }}'
+    oracle_setup_exe_location: C:\app\{{ oracle_username }}\product\12.2.0\dbhome_1\database
+    ora_repo_base_dir: database/oracle/ORA12/Windows
+    oracle_install_pkg: winx64_12201_database.zip
+    oracle_client_install_pkg: winx64_12201_client.zip
+    win_unzip_dest: 'C:\app\{{ oracle_username }}\product\12.2.0\dbhome_1'
+    #win_unzip_dest: 'C:\app\{{ oracle_username }}\product\*o12_version_product\dbhome_1'
+    #oracle_version: 'oracle12'
+    oracle_version_repo: ORA12
+
+    oracle_os: Windows
+    oracle_release: '12.2.0.1'
+    sqlplus_release: '12.2.0.1.0'
+    sqlplus_version: '12.2.0.0.0'
+    ORACLE_HOME_NAME: OraDB12Home1
+    oracle_install_rsp: 'ora12_win2016_manual_inst.rsp'
+    oracle_client_install_rsp: 'ora12_win2016_client_inst.rsp'
+    key_value: "" # this line is simply a workaround to mute an error msg. See https://github.com/VSChina/vscode-ansible/issues/261
+  when: oracle_version == '12.2'
+
+- name: Setting Oracle 18c Facts
+  set_fact:
+    # Directory Structure
+    oracle_version_product: 18.0.0
+    #  debug: "here's oracle_version_product"
+    #    msg: 'Found oracle_version_product: *o18_version_prodcut'
+    # ORACLE_HOME: is the path where the binaries will be installed
+    ORACLE_HOME: C:\app\{{ oracle_username }}\product\18.0.0\dbhome_1
+    # ORACLE_BASE: is the location of the ORACLE_BASE where the diag directory and many more will be located
+    ORACLE_BASE: 'C:\app\{{ oracle_username }}'
+    oracle_setup_exe_location: C:\app\{{ oracle_username }}\product\18.0.0\dbhome_1
+    # Download Facts
+    ora_repo_base_dir: database/oracle/oracle18c/Windows
+    oracle_install_pkg: WINDOWS.X64_180000_db_home.zip
+    win_unzip_dest: C:\app\{{ oracle_username }}\product\18.0.0\dbhome_1\database
+    oracle_version_repo: oracle18c
+    oracle_os: Windows
+    # Factos for validation
+    oracle_release: '18.3.0.0'
+    sqlplus_release: '18.0.0.0.0'
+    sqlplus_version: '18.3.0.0.0'
+    ORACLE_HOME_NAME: OraDB18Home1
+    # ORACLE_INVENTORY: is the location on the server of the oracle inventory
+    # ORACLE_INVENTORY: 'C:\Program Files\Oracle\Inventory'
+    key_value: "" # this line is simply a workaround to mute an error msg. See https://github.com/VSChina/vscode-ansible/issues/261
+  when: oracle_version == '18.3'
+
+
+- name: Setting Oracle 19c Facts
+  set_fact:
+    oracle_version_product: '193000'
+    # ORACLE_HOME: is the path where the binaries will be installed
+    ORACLE_HOME: C:\app\{{ oracle_username }}\product\193000\dbhome_1
+    # ORACLE_BASE: is the location of the ORACLE_BASE where the diag directory and many more will be located
+    ORACLE_BASE: C:\app\{{ oracle_username }}
+    oracle_setup_exe_location: C:\app\{{ oracle_username }}\product\193000\dbhome_1
+    ora_repo_base_dir: database/oracle/oracle19c/Windows
+    oracle_install_pkg: WINDOWS.X64_193000_db_home.zip
+    win_unzip_dest: C:\app\{{ oracle_username }}\product\193000\dbhome_1\database
+    oracle_version_repo: 'oracle19c'
+    oracle_os: Windows
+    oracle_release: '19.3.0.0'
+    sqlplus_release: '19.0.0.0.0'
+    sqlplus_version: '19.3.0.0.0'
+    # ORACLE_HOME_NAME: OraDB19Home1
+    # ORACLE_INVENTORY: is the location on the server of the oracle inventory
+    # ORACLE_INVENTORY: C:\Program Files\Oracle\Inventory
+    key_value: "" # this line is simply a workaround to mute an error msg. See https://github.com/VSChina/vscode-ansible/issues/261
+  when: oracle_version == '19.3'
+

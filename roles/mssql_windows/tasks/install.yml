@@ -1,0 +1,53 @@
+---
+
+- name: "Creating MS SQL directories"
+  win_file:
+    path: "{{ item }}"
+    state: "{{ dir_state }}"
+  with_items:
+    - "{{ mssql_install_dir }}"
+
+- name : "Downloading {{ mssql_iso_pkg }}"
+  win_get_url:  
+    url: "{{ vertex_repo_url }}/{{ mssql_iso_base_dir }}/{{ mssql_iso_pkg }}"
+    dest: "{{ vertex_tmp_dir }}"
+    force: no
+    timeout: 0
+
+- name: "Mounting {{ mssql_iso_pkg }}"
+  win_disk_image:
+    image_path: '{{ vertex_tmp_dir }}\{{ mssql_iso_pkg }}'
+    state: present
+  register: disk_image_out    
+
+- name: "Installing MS SQL Server version {{ mssql_version }}"
+  win_shell: |
+    {{ disk_image_out.mount_path }}\setup.exe /q /ConfigurationFile={{ vertex_tmp_dir}}\mssql_install.ini /IACCEPTSQLSERVERLICENSETERMS=true /SAPWD={{ db_pass }} /CLTCTLRNAME={{ ansible_facts['hostname'] }}
+  become: true
+  become_user: cstadmin
+  become_method: runas
+
+- name: "Unmounting {{ mssql_iso_pkg }}"
+  win_disk_image:
+    image_path: '{{ vertex_tmp_dir }}\{{ mssql_iso_pkg }}'
+    state: absent
+
+- name: "Copying Port config script"
+  win_template:
+   src: config_mssql_port.j2
+   dest: '{{ vertex_tmp_dir }}\config_mssql_port.ps1'
+
+- name: "Running port config script"
+  win_shell: 'powershell.exe {{ vertex_tmp_dir }}\config_mssql_port.ps1'
+
+- name: "Installing MS SQL Server Command line utilities"
+  win_chocolatey:
+    name: sqlserver-cmdlineutils
+    state: "{{ pkg_state }}"
+
+- name: "Creating MSSQL Directories"
+  win_file:
+    path: "{{ item }}"
+    state: "{{ dir_state }}" 
+  with_items:
+    - "{{ mssql_dir }}"

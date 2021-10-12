@@ -1,0 +1,38 @@
+---
+  - name: "Copying O Series database creation script"
+    copy: 
+      src: oseries_database.sql 
+      dest: "{{ vertex_tmp_dir }}/oseries_database.sql"
+      owner: "{{ pgsql_user }}"
+      group: postgres 
+      mode: 0777
+  
+  - name: "Copying O Series database tables creation script"
+    copy: 
+      src: oseries_tablespace.sql 
+      dest: "{{ vertex_tmp_dir }}/oseries_tablespace.sql"
+      owner: "{{ pgsql_user }}"
+      group: postgres 
+      mode: 0777
+  
+  - name: "Creating Postgres user: oseries"
+    shell: |
+      /usr/pgsql-{{ pgsql_version }}/bin/psql -c "create user oseries WITH PASSWORD 'oseries';"
+    become: true
+    become_user: "{{ pgsql_user }}"
+  
+  
+  - name: "Creating O Series database"
+    command: '/usr/pgsql-{{ pgsql_version }}/bin/psql -c "\i {{ vertex_tmp_dir }}/oseries_database.sql"'
+    become: true
+    become_user: "{{ pgsql_user }}"
+  
+  - name: "Creating O Series tables"
+    command: '/usr/pgsql-{{ pgsql_version }}/bin/psql -c "\i {{ vertex_tmp_dir }}/oseries_tablespace.sql"'
+    become: true
+    become_user: "{{ pgsql_user }}"
+  
+  - name: Restart Postgres (Required for connections to DB to work)
+    command: '/usr/pgsql-{{ pgsql_version }}/bin/pg_ctl -D /var/lib/pgsql/{{ pgsql_version }}/data -l /var/lib/pgsql/{{ pgsql_version }}/pgstartup.log -w restart'
+    become: true
+    become_user: "{{ pgsql_user }}"

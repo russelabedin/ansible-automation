@@ -1,0 +1,10 @@
+---
+- name: "Validating MS SQL install"
+  win_shell: | 
+    echo "Validating MS SQL install" >> {{vertex_tmp_dir}}\{{ vertex_artifact_file }}
+    choco list --localonly sql-server-management-studio >> {{vertex_tmp_dir}}\{{ vertex_artifact_file }}
+    echo "" >> {{vertex_tmp_dir}}\\{{ vertex_artifact_file }}
+    dir {{ install_drive }} >> {{vertex_tmp_dir}}\{{ vertex_artifact_file }}
+    echo ""
+    #command to show mssql service is running
+

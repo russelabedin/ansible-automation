@@ -1,0 +1,7 @@
+---
+    
+    jenkins_pkg_state: present
+    jenkins_pkgs:
+        - { name: maven, version: 3.6.3 }
+        - { name: ant, version: 1.10.5 }
+        - { name: nodejs, version: 14.0.0 }

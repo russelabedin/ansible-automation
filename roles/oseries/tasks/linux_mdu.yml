@@ -1,0 +1,79 @@
+---
+
+- name: set std filepath
+  set_fact: stdFile=""
+- name: set lease filepath
+  set_fact: leaseFile=""
+- name: set telecom filepath
+  set_fact: telecomFile=""
+
+- name:
+  set_fact:
+    oseries_version: "9"
+
+- name: Determining the latest MDU release
+  shell: curl -s https://binrepo.vtxdev.net/artifactory/oseries-mdu-prod/TPS/ | grep release* | tail -1 | sed -e 's/<[^>]*>//g' -e 's/\.0.*/\.0/'
+  register: mdu_release
+
+
+- name: print powershell output
+  debug:
+    msg: "The latest mdu is: {{ mdu_release.stdout.split('release')[1].split('.')[0] }}"
+
+- name: set mdu release variable
+  set_fact: mdu_release="{{ mdu_release.stdout.split("release")[1].split(".")[0] }}"
+
+- name:
+  debug:
+    msg: "mdu_release is {{ mdu_release }}"
+
+- name: set std url
+  set_fact: stdZip="{{ vertex_mdu_url }}/release{{ mdu_release }}.00%20{{ oseries_version }}.0/std/full/vertexoseries{{ oseries_version }}0_{{ mdu_release }}f.zip"
+
+- name: set lease  url
+  set_fact: leaseZip="{{ vertex_mdu_url }}/release{{ mdu_release }}.00%20{{ oseries_version }}.0/lease/full/vertexoserieslease{{ oseries_version }}0_{{ mdu_release }}f.zip"
+
+- name: set telecom url
+  set_fact: telecomZip="{{ vertex_mdu_url }}/release{{ mdu_release }}.00%20{{ oseries_version }}.0/telecom/full/vertexoseriestelecom{{ oseries_version }}0_{{ mdu_release }}f.zip"
+
+- name: "Download MDU STD Zip File"
+  get_url:
+    url: "{{ stdZip }}"
+    dest: "{{ vertex_root }}/dataupdate/"
+    mode: 0777
+  
+- name: "Download MDU lease Zip File"
+  get_url:
+    url: "{{ leaseZip }}"
+    dest: "{{ vertex_root }}/dataupdate/"
+    mode: 0777
+  
+- name: "Download MDU telecom Zip File"
+  get_url:
+    url: "{{ telecomZip }}"
+    dest: "{{ vertex_root }}/dataupdate/"
+    mode: 0777
+
+
+# Leaving this block commented out because this will start loading MDU which will run for several hours.
+# By copying the latest MDU on the system, we will leave it up to the end user to kick off the MDU loading process. 
+
+# - name: set std filepath
+#   set_fact: stdFile="{{ vertex_root }}/dataupdate/vertexoseries{{ oseries_version }}0_{{ mdu_release }}f.zip"
+#   when: '"std" in mdu_directories|lower'
+# - name: set lease  filepath
+#   set_fact: leaseFile="{{ vertex_root }}/dataupdate/vertexoserieslease{{ oseries_version }}0_{{ mdu_release }}f.zip"
+#   when: '"lease" in mdu_directories|lower'
+# - name: set telecom filePath
+#   set_fact: telecomFile="{{ vertex_root }}/dataupdate/vertexoseriestelecom{{ oseries_version }}0_{{ mdu_release }}f.zip"
+#   when: '"telecom" in mdu_directories|lower'
+
+# - name: "run regular update"
+#   shell: /opt/vertex/oseries/bin/runDataUpdate.sh -u sysadmin -p vertex
+#   with_items:
+#     - "{{ stdFile }}"
+#     - "{{ leaseFile }}"
+#     - "{{ telecomFile }}"
+#   args:
+#     executable: /bin/bash
+#     chdir:  /opt/vertex/oseries/bin

@@ -1,0 +1,32 @@
+---
+
+- name: Set facts for DB backup and Restore
+  include: set_facts.yml
+
+- name: Create mountpoint
+  file:
+    path: /mnt/backups
+    state: directory
+
+- name: Mount shared drive
+  mount:
+    state: mounted
+    fstype: cifs
+    opts: "username={{ fs_login }},password={{ fs_pass }},dir_mode=0777,file_mode=0777"
+    path: /mnt/backups
+    src:  "{{ backup_path }}"
+
+- include_tasks: hana.yml
+  when: db_type == "hana"
+  args:
+    apply:
+      become: true
+      become_user: hxeadm
+
+- include: pgsql.yml
+  when: db_type == "pgsql"
+
+- name: Unmount shared drive
+  mount:
+    state: unmounted
+    path: /mnt/backups

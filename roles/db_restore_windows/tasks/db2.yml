@@ -1,0 +1,55 @@
+---
+  - name: Create backup folder
+    win_file:
+      path: "{{ temp_backup_path }}"
+      state: directory
+
+  - name: Copy dump to local temp directory
+    win_copy:
+      remote_src: yes
+      src: "{{ backup_path }}\\{{ backup_file_name }}"
+      dest: "{{ temp_backup_path }}\\"
+    become: yes
+    become_user: "{{ fs_login }}"
+    become_method: runas
+    vars:
+      ansible_become_password: "{{ fs_pass }}"
+
+  - name: Find backup file name
+    win_find:
+      paths: "{{ temp_backup_path }}\\{{ backup_file_name }}"
+    register: files_list
+
+  - name: Get backup timestemp
+    set_fact:
+      backup_timestamp: "{{ files_list['files'][0]['path'].split('.')[-2] }}"
+
+  - win_shell: db2cmd -i -w db2clpsetcp
+    register: db2clp_output
+
+  - name: Init DB2 env
+    win_environment:
+      name: DB2CLP
+      value: "{{ db2clp_output.stdout_lines[1].split('=')[1] }}"
+      level: machine
+      state: present
+
+  - win_shell: db2 terminate
+  - win_shell: db2 deactivate db {{ db_name }}
+  - win_shell: db2 drop database {{ db_name }}
+  - win_shell: >
+      db2 restore db {{ db_name }}
+      from {{ temp_backup_path }}\{{ backup_file_name }}\
+      taken at {{ backup_timestamp }}
+  - win_shell: db2 activate db {{ db_name }}
+
+  - name: Delete DB2 env var
+    win_environment:
+      name: DB2CLP
+      level: machine
+      state: absent
+
+  - name: Cleanup temp folder
+    win_file:
+      path: "{{ temp_backup_path }}\\{{ backup_file_name }}"
+      state: absent

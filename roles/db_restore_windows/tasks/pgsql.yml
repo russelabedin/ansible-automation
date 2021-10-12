@@ -1,0 +1,41 @@
+---
+  - name: Set postgres user name
+    win_environment:
+      state: present
+      name: PGUSER
+      value: "{{ pg_db_admin }}"
+      level: user  
+
+  - name: Set postgres password
+    win_environment:
+      state: present
+      name: PGPASSWORD
+      value: "{{ pg_db_admin_pass }}"
+      level: user
+
+  - name: Set default database 
+    win_environment:
+      state: present
+      name: PGDATABASE
+      value: "{{ db_name }}"
+      level: user
+
+  - name: Set psql client encoding
+    win_environment:
+      state: present
+      name: PGCLIENTENCODING 
+      value: UTF8
+      level: user
+
+
+  - name: Drop old database
+    win_shell: "dropdb -U {{ pg_db_admin }} -w --if-exists --maintenance-db=postgres {{ db_name }}"
+  # - name: Drop old user
+  #   win_shell: "dropuser -U {{ pg_db_admin }} -w --if-exists {{ pg_db_user }}"
+  # - name: Recreate user
+  #   win_shell: "createuser -w -d -r -s -U {{ pg_db_admin }} {{ pg_db_user }}"
+  - name: Recreate {{ db_name }} database
+    win_shell: "createdb -U {{ pg_db_admin }} -w {{db_name}}"
+
+  - name: Restore {{  db_name }} db from file
+    win_shell: "psql -f {{ backup_path }}\\{{ backup_file_name }}.dump"

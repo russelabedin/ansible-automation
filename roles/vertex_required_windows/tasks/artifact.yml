@@ -1,0 +1,17 @@
+---
+# Ansible Playbook to configure basic required packages, directories, and users for all Vertex systems
+- name: "Validating users"
+  win_shell:
+    net user {{ item.name }} >> {{vertex_tmp_dir}}\{{ vertex_artifact_file }}
+  with_items:
+    - "{{ vertex_user }}"
+
+- name: "Validating Vertex Temp Directory"
+  win_shell:
+    dir {{ vertex_tmp_dir }} >> {{vertex_tmp_dir}}\{{ vertex_artifact_file }}
+
+- name: "Validating  Packages"
+  win_shell:
+    choco list --local-only {{ item }}  >> {{vertex_tmp_dir}}\{{ vertex_artifact_file }}  
+  with_items:
+    - "{{ vertex_pkgs }}"

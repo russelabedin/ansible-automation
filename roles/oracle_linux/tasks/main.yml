@@ -1,0 +1,63 @@
+---
+
+# ==> Set facts as per oracle_version defined
+- name: Set facts for {{ oracle_version }}
+  include: set_facts.yml
+  when: oracle_version is defined
+
+# ==> Checkig if oracle is already installed on target server
+- include: validate.yml
+  when: not oracle_database_already_installed
+
+# ==> Ensure oracle user is present or if not then create it
+- name: Ensure user oracle user is present
+  user:
+    name: "{{ oracle_username }}"
+    password: "{{ oracle_password }}"
+    state: present
+
+- debug:
+    msg: "OS Family: {{ ansible_distribution }}"
+
+# ==> Making all OS level configuration before oracle installation start
+- include: prepare.yml
+  become: yes
+  when: ansible_os_family != "Windows" and not oracle_database_already_installed
+
+# ==> Ensure all directories required for oracle installation are present
+- name: Ensure All Oracle required directories are present
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: oracle
+    group: oinstall
+    mode: '0755'
+  with_items:
+    - "{{ ORACLE_INVENTORY }}"
+    - "{{ ORACLE_BASE }}"
+    - "{{ ORACLE_HOME }}"
+    - "{{ linux_tmp_dir }}"
+    - "{{ dataLocation }}"
+    - "{{ oracle_installer_location }}"
+
+# ==> Set oracle user permissions
+- name: Set oracle user permissions
+  file:
+    path: /u01
+    owner: oracle
+    group: oinstall
+    mode: '0755'
+
+# ==> Start Oracle Software installation
+- name: Starting Oracle {{ oracle_version }} software installation
+  include: install_oracle.yml
+  become: yes
+  become_user: "{{ oracle_username }}"
+  when: not oracle_database_already_installed
+  register: oracle_db_installed
+
+# ==> Executing post database configuration like create tablespace and oseries user.
+- name: Executing Post oracle configuration
+  include: post_install_oracle_config.yml
+  become: yes
+  become_user: root

@@ -1,0 +1,88 @@
+---
+# Ansible Playbook to configure basic required packages
+- name: "Creating Users"
+  win_user:
+    name: "{{ item.name }}"
+    state: "{{ usr_state }}"
+    account_disabled: no
+    groups: "{{ item.groups }}"
+    groups_action: add
+    password: "{{ item.password }}" 
+  with_items:
+    - "{{ vertex_user }}"
+    - "{{ awx_user }}"
+
+- name: "Creating Vertex Temp Directory"
+  win_file:
+    path: "{{ vertex_tmp_dir }}"
+    state: "{{ dir_state }}"
+
+# chocolatey enhanced exit codes break ansible
+# starting in choco version 10.12.
+# see release notes/breaking https://chocolatey.org/docs/release-notes
+
+- name: "Disable Default Repo"
+  win_chocolatey_source:
+    name: chocolatey
+    state: disabled
+
+- name: "Enable Vertex Chocolatey Repo"
+  win_chocolatey_source:
+    name: vertex
+    state: present
+    source: "{{ vertex_chocolatey_repo }}"
+  
+- name: "Disable Chocolatey Enhanced Exit Codes"
+  win_chocolatey_feature:
+    name: useEnhancedExitCodes
+    state: disabled
+
+# ignore checksums is required for chrome install checksum mismatch
+# see notes https://chocolatey.org/packages/GoogleChrome#description 
+
+- name: "Set Everyone ACL for Chocolatey"
+  win_acl:
+    user: "Everyone"
+    path: 'C:\ProgramData\chocolatey'
+    type: allow
+    rights: FullControl
+    state: present
+    inherit: ContainerInherit, ObjectInherit
+    propagation: 'None'
+
+- name: "Installing Packages"
+  win_chocolatey:
+    name: "{{ item.name }}"
+    state: "{{ pkg_state }}"
+    version: "{{ item.version }}"
+    ignore_checksums: yes
+  with_items:
+    - "{{ vertex_pkgs }}"
+  ignore_errors: yes
+  register: package_installation
+
+#Second attempt to install if failures occur on first attempt
+- name: "Installing Packages"
+  win_chocolatey:
+    name: "{{ item.name }}"
+    state: "{{ pkg_state }}"
+    version: "{{ item.version }}"
+    ignore_checksums: yes
+  with_items:
+    - "{{ vertex_pkgs }}"
+  ignore_errors: yes
+  when: package_installation is failed
+
+- name: "Copying install ini file"
+  win_template:
+    src: "FreeSSHDService.ini.j2"
+    dest: 'C:\Program Files (x86)\freeSSHd\FreeSSHDService.ini'
+  register: FreeSSHDService_file
+
+- name: "Restart SSHD service"
+  win_service:
+    name: FreeSSHDService
+    state: restarted
+  when: FreeSSHDService_file.changed
+
+#- include: artifact.yml

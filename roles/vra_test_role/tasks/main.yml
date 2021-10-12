@@ -1,0 +1,5 @@
+---
+- name: "Test Run"
+  debug:
+    msg: This is just a test
+  changed_when: True

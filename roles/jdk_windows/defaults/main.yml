@@ -1,0 +1,4 @@
+---
+jdk_repo_base: java/Windows/Amazon/
+jdk_pkg: amazon-corretto-8.202.08.2-windows-x64-jdk.zip
+jdk_install_dir: 'C:\DeploymentUnit\java\jdk1.8.0_202'

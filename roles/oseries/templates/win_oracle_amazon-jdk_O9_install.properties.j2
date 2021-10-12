@@ -1,0 +1,82 @@
+# Features to install
+features=O Series,Apache Tomcat,Transaction Processing System Database,Util Database,GIS Database,Journal Database,Reporting Database,Retail Tax Extract Database,Batch Client Interface Database
+
+# Installation directory
+install.dir=C:/vertex/oseries
+
+# Apache Tomcat settings
+java.home=C:/DeploymentUnit/java/jdk1.8.0_202/jre
+http.port=8095
+http.port.enabled=true
+https.port=8443
+https.port.enabled=false
+shutdown.port=8096
+startup.memory=2048
+maximum.memory=6144
+service.name=vertex90
+install.service=true
+
+# O Series passwords
+admin.password=vertex
+sysadmin.password=vertex
+
+## Transaction Processing System database settings
+db.tps.driver=oracle.jdbc.driver.OracleDriver
+db.tps.url=jdbc:oracle:thin:@//localhost:1521/A001
+db.tps.username=oseries
+db.tps.password=oseries
+db.tps.schema=oseries
+
+# Util database settings
+db.util.driver=oracle.jdbc.driver.OracleDriver
+db.util.url=jdbc:oracle:thin:@//localhost:1521/A001
+db.util.username=oseries
+db.util.password=oseries
+db.util.schema=oseries
+
+# GIS database settings
+db.gis.driver=oracle.jdbc.driver.OracleDriver
+db.gis.url=jdbc:oracle:thin:@//localhost:1521/A001
+db.gis.username=oseries
+db.gis.password=oseries
+db.gis.schema=oseries
+
+# Journal database settings
+db.journal.driver=oracle.jdbc.driver.OracleDriver
+db.journal.url=jdbc:oracle:thin:@//localhost:1521/A001
+db.journal.username=oseries
+db.journal.password=oseries
+db.journal.schema=oseries
+
+# Reporting database settings
+db.rpt.driver=oracle.jdbc.driver.OracleDriver
+db.rpt.url=jdbc:oracle:thin:@//localhost:1521/A001
+db.rpt.username=oseries
+db.rpt.password=oseries
+db.rpt.schema=oseries
+db.rpt.enable.compression=false
+
+# Retail Tax Extract database settings
+db.rte.driver=oracle.jdbc.driver.OracleDriver
+db.rte.url=jdbc:oracle:thin:@//localhost:1521/A001
+db.rte.username=oseries
+db.rte.password=oseries
+db.rte.schema=oseries
+
+# Batch Client Interface database settings
+db.bci.driver=oracle.jdbc.driver.OracleDriver
+db.bci.url=jdbc:oracle:thin:@//localhost:1521/A001
+db.bci.username=oseries
+db.bci.password=oseries
+db.bci.schema=oseries
+
+# Batch Client Interface settings
+bci.transaction.table.name=TransactionLog
+bci.control.table.name=TransactionControl
+bci.user.name=sysadmin
+bci.password=vertex
+bci.trusted.id=
+bci.threads=2
+
+# License file
+license.file=

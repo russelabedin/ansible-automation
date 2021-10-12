@@ -1,0 +1,37 @@
+# O Series 9.0 Trunk installation on Windows Server 2016 with SQL Server 2016 or Oracle 12/19,
+# Amazon Corretto 8 and embedded tomcat
+#
+- name: "Checking for O Series install - Windows"
+  win_stat:
+    path: C:\vertex\oseries\bin
+  register: oseries_win
+
+- name: "Copying O Series installer to local system - Windows"
+  win_get_url:
+      url: "{{ oseries9_repo_url }}/{{ oseries_base_version }}/{{ o_series_pkg }}"
+      dest: "{{ vertex_tmp_dir }}\\"
+  when: not oseries_win.stat.exists
+
+# Made the 'when' clause a compound to handle oracle db
+- name: "Copying O Series properties file to local system - Windows"
+  win_template:
+    src: "{{ o_series_install_properties }}.j2"
+    dest: "{{ vertex_tmp_dir }}\\{{ o_series_install_properties }}"
+  when: not oseries_win.stat.exists
+
+# Made the 'when' clause a compound to handle oracle db
+# - name: "Copying O Series properties filed to local system - Oracle on Windows"
+#   win_template:
+#     src: "{{ o_series_install_properties_oracle }}.j2"
+#     dest: "{{ vertex_tmp_dir }}\\{{ o_series_install_properties_oracle }}"
+#   when: (not oseries_win_stat.exists and oracle_installed)
+
+- name: "Installing O Series application - Windows"
+  win_shell: '{{ java_home }}\\bin\\java -jar {{ vertex_tmp_dir }}\\{{ o_series_pkg }} -f {{ vertex_tmp_dir }}\\{{ o_series_install_properties }}'
+  when: not oseries_win.stat.exists
+
+- name: "Adding license file - Windows"
+  win_get_url:
+    url: "{{ oseries9_license }}"
+    dest: "{{ oseries_home }}\\"
+  when: not oseries_win.stat.exists

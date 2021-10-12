@@ -1,0 +1,16 @@
+---
+- name: reboot server
+  win_reboot:
+    msg: Reboot initiated by Ansible
+    post_reboot_delay: 300
+  register: reboot
+
+- name: Disable MSSQL services
+  win_service: 
+    name: MSSQLSERVER
+    state: absent
+
+- name: Start OSERIES services
+  win_service: 
+    name: MSSQL$OSERIES
+    state: started

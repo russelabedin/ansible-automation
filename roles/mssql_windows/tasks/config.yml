@@ -1,0 +1,24 @@
+---
+- name: "Copy MS SQL user script to server"
+  win_copy:
+    src: "files/{{ mssql_user_script }}"
+    dest: "{{ vertex_tmp_dir }}\\"
+
+- name: "Copy MS SQL config script to server"
+  win_copy: 
+    src: "files/{{ mssql_config_script }}"
+    dest: "{{ vertex_tmp_dir }}\\"
+    
+- name: "Copy MS SQL Memory script to server"
+  win_copy: 
+    src: "files/SQL_Configure_Memory.sql"
+    dest: "{{ vertex_tmp_dir }}\\"
+
+- name: "Executing MS SQL user script"
+  win_command: '"C:\Program Files\Microsoft SQL Server\Client SDK\ODBC\130\Tools\Binn\sqlcmd" -S .\{{ db_inst }} -U {{ db_user }} -P "{{ db_pass }}" -i {{ vertex_tmp_dir}}\{{ mssql_user_script }}'
+
+- name: "Executing MS SQL config script"
+  win_command: '"C:\Program Files\Microsoft SQL Server\Client SDK\ODBC\130\Tools\Binn\sqlcmd" -S .\{{ db_inst }} -U oseries -P "oseries" -i {{ vertex_tmp_dir}}\{{ mssql_config_script }}'
+
+- name: "Executing MS SQL memory Script"
+  win_command: '"C:\Program Files\Microsoft SQL Server\Client SDK\ODBC\130\Tools\Binn\sqlcmd" -S .\{{ db_inst }} -U {{ db_user }} -P "{{ db_pass }}" -i {{ vertex_tmp_dir}}\SQL_Configure_Memory.sql'

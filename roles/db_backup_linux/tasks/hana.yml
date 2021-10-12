@@ -1,0 +1,15 @@
+---
+
+- name: "Set db log modul"
+  shell: |
+    . ~hxeadm/.bash_profile
+    /usr/sap/HXE/HDB90/exe/hdbsql -i 90 -d systemdb -u {{ hana_db_admin }}  -p "{{ hana_db_admin_pass }}" "ALTER SYSTEM ALTER CONFIGURATION ('global.ini', 'SYSTEM') SET ('persistence', 'log_mode') = 'overwrite' WITH RECONFIGURE"
+  become: true
+  become_user: hxeadm
+
+- name: "Executing OSeries DB creation script"
+  shell: |
+    . ~hxeadm/.bash_profile
+    /usr/sap/HXE/HDB90/exe/hdbsql -i 90 -d systemdb -u {{ hana_db_admin }}  -p "{{ hana_db_admin_pass }}" "BACKUP DATA for {{ db_name }} USING FILE ('/mnt/backups/{{ backup_file_name }}')"
+  become: true
+  become_user: hxeadm

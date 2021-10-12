@@ -1,0 +1,8 @@
+---
+  - postgresql_db:
+      login_user: "{{ pg_db_admin }}"
+      login_password: "{{ pg_db_admin_pass }}"
+      name: "{{ db_name }}"
+      state: dump
+      target: "/mnt/backups/{{ backup_file_name }}.dump"
+      target_opts: "-C -Fp"

@@ -1,0 +1,52 @@
+---
+
+# Values to be used when performing a default Oracle installation
+db_sid: A001
+
+db_user: system
+db_pass: !vault |
+          $ANSIBLE_VAULT;1.1;AES256
+          65346630636464306664643835633533386437353631366562343539663833623831336566316331
+          6334333461323263323762333631346437656465643462340a373965653034303965656162323036
+          32646435633332303666336439366530323134613566623065323961316266373638626265326363
+          6562373135393663380a316265383965333334643230313439306463383539376365646366633565
+          3539
+
+db_sysdba_user: sys
+db_sysdba_pass: !vault |
+          $ANSIBLE_VAULT;1.1;AES256
+          65346630636464306664643835633533386437353631366562343539663833623831336566316331
+          6334333461323263323762333631346437656465643462340a373965653034303965656162323036
+          32646435633332303666336439366530323134613566623065323961316266373638626265326363
+          6562373135393663380a316265383965333334643230313439306463383539376365646366633565
+          3539
+
+oracle_username: oracle
+oracle_password: !vault |
+          $ANSIBLE_VAULT;1.1;AES256
+          35613138633136343963333764636164303131623063393630333434336265653936633962656362
+          3664303630336530366463326464393835376561366433390a393761646337343830343332323739
+          36343665326536366162623230343038363934353331636632336237613264616664303336636665
+          6466623662383634370a396634323162613364313834636665626431303861643565616636356434
+          3234
+
+
+# scripts for creating the oseries schema and user
+oracle_config_script: oracle_create_db_script.sql
+oracle_user_script: oracle_create_user_oseries_script.sql
+
+
+# # ORACLE_INVENTORY: is the location on the server of the oracle inventory
+ORACLE_INVENTORY: 'C:\Program Files\Oracle\Inventory'
+# ORACLE_HOME: is the path where the binaries will be installed
+# ORACLE_HOME: 'C:\app\{{ oracle_username }}\product\{{ oracle_version_product }}\dbhome_1'
+# # ORACLE_BASE: is the location of the ORACLE_BASE where the diag directory and many more will be located
+# ORACLE_BASE: 'C:\app\{{ oracle_username }}'
+
+
+# oracle_base_zip: '/database/oracle/{{ oracle_version }}/{{ oracle_release }}/{{ oracle_os }}/'
+oracle_install_rsp: 'oracle{{ oracle_version }}_advanced_install.rsp'
+# oracle_client_install_rsp: 'oracle_client_inst.rsp'
+
+
+ORACLE_BASE: 'C:\app\{{ oracle_username }}'

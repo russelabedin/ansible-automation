@@ -1,0 +1,117 @@
+---
+
+# ==> Checking if oracle installation binary is already downloaded
+# - name: "Checking for Oracle Installer zip if already downloaded"
+#   stat:
+#     path: '{{ linux_tmp_dir }}/{{ oracle_install_pkg }}'
+#   register: ora_installer_downloaded
+
+# ==> Downloading oracle software from artifactory 
+- name: "Downloading Oracle {{ oracle_install_pkg }} software"
+  get_url:
+    url: '{{ vertex_repo_url }}/{{ ora_repo_base_dir }}/{{ oracle_install_pkg }}'
+    dest: '{{ linux_tmp_dir }}/'
+#  register: get_oracle
+#  when: not ora_installer_downloaded.stat.exists
+
+# ==> Checking if oracle installer is already unzipped
+# - name: "Checking if oracle installer is already unzipped"
+#   stat:
+#     path: '{{ oracle_installer_location }}/runInstaller'
+#   register: ora_installer_unzipped
+
+# ==> Unzipping oracle software installer file 
+- name: "Unzipping the oracle {{ oracle_version }} installer file"
+  unarchive:
+    remote_src: yes
+    src: '{{ linux_tmp_dir }}/{{ oracle_install_pkg }}'
+    dest: '{{ linux_tmp_dir }}'
+  when: oracle_version == '12.2'
+
+- name: "Unzipping the oracle {{ oracle_version }} installer file"
+  unarchive:
+    remote_src: yes
+    src: '{{ linux_tmp_dir }}/{{ oracle_install_pkg }}'
+    dest: '{{ oracle_installer_location }}'
+  when: oracle_version == '19.3'
+
+# ==> Checking is response file required for silent installation is already copied 
+# - name: "Checking for oracle response file"
+#   stat:
+#     path: '{{ linux_tmp_dir }}/db-install-{{ oracle_version }}.rsp'
+#   register: ora_rsp_copied
+
+# ==> Coping Response file on target server
+- name: "Copying oracle response file"
+  template:
+    src: "{{ oracle_install_rsp }}"
+    dest: '{{ linux_tmp_dir }}/db-install-{{ oracle_version }}.rsp'
+#  when: not ora_rsp_copied.stat.exists
+
+# ==> Run Oracle 12 Software installation
+- name: Installing Oracle {{ oracle_version }} on {{ host_name }}
+  shell: "{{ oracle_installer_location }}/runInstaller -silent -waitforcompletion -ignoreSysPrereqs -ignorePrereq -showProgress -responseFile {{ linux_tmp_dir }}/db-install-{{ oracle_version }}.rsp"
+  args:
+    creates: "{{ ORACLE_HOME }}/bin/sqlplus"
+  become: yes
+  become_user: oracle
+  register: command_result
+  failed_when: "'Successfully Setup Software.' not in command_result.stdout_lines"
+  when: oracle_version == '12.2'
+
+# ==> Set Environemnt variable specifically for Oracle 19 and Linux 8 
+- name: Set Environemnt variable specifically for Oracle 19 and Linux 8 
+  shell: echo 'CV_ASSUME_DISTID=OEL8' >> {{ ORACLE_HOME }}/cv/admin/cvu_config
+  become: yes
+  become_user: oracle
+  when: oracle_version == '19.3' and {{ hostvars[inventory_hostname].ansible_distribution_major_version }} == 8
+
+# ==> Run Oracle 19 Software installation
+- name: Installing Oracle {{ oracle_version }} on {{ host_name }}
+  shell: "{{ oracle_installer_location }}/runInstaller -silent -waitforcompletion -responseFile {{ linux_tmp_dir }}/db-install-{{ oracle_version }}.rsp"
+#  args:
+#   creates: "{{ ORACLE_HOME }}/bin/sqlplus"
+  become: yes
+  become_user: oracle
+  register: command_result
+  ignore_errors: yes
+#  failed_when: "'Successfully Setup Software.' not in command_result.stdout_lines"
+  when: oracle_version == '19.3'
+
+# ==> Execute root.sh which required post Oracle installation
+- name: Executing root.sh file
+  command: '{{ ORACLE_HOME }}/root.sh'
+  become_user: root
+
+# ==> Copy Listener file to installation location
+- name: Copying listener response file
+  template: src={{ oracle_netca_rsp }} dest={{ linux_tmp_dir }}/netca.rsp
+
+# ==> Run netca to create Listener
+- name: Creating listener using netca
+  command: '{{ ORACLE_HOME }}/bin/netca -silent -responseFile {{ linux_tmp_dir }}/netca.rsp'
+
+# ==> Copy dbca file to installation location
+- name: Copying response file for dbca
+  template: src={{ oracle_dbca_rsp }} dest={{ linux_tmp_dir }}/dbca.rsp
+
+# ==> Run dbca to create A001 database
+- name: Creating oracle {{ db_sid }} database on {{ host_name }}
+  command: '{{ ORACLE_HOME }}/bin/dbca -silent -responseFile {{ linux_tmp_dir }}/dbca.rsp -createDatabase'
+
+# ==> Adding ORACLE_HOME in bash profile
+- name: Adding ORACLE_HOME in bash profile
+  lineinfile: dest='/home/{{ oracle_username }}/.bashrc' line='export ORACLE_HOME={{ ORACLE_HOME }}'
+
+# ==> Adding ORACLE_SID in bash profile
+- name: Adding ORACLE_SID in bash profile
+  lineinfile: dest='/home/{{ oracle_username }}/.bashrc' line='export ORACLE_SID={{ db_sid }}'
+
+# ==> Adding Oracle Bin path in bash profile
+- name: Adding ORACLE_SID in bash profile
+  lineinfile: dest='/home/{{ oracle_username }}/.bashrc' line='export PATH=$PATH:$ORACLE_HOME/bin'
+
+# ==> Adding ORACLE_SID and ORACLE_HOME entry in oratab file
+- name: Adding ORACLE_SID and ORACLE_HOME entry in /etc/oratab file
+  lineinfile: dest='/etc/oratab' regexp='^{{ db_sid }}:{{ ORACLE_HOME }}:N' line='{{ db_sid }}:{{ ORACLE_HOME }}:Y'
+  become_user: root

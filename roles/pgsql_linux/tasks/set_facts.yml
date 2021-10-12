@@ -1,0 +1,42 @@
+---
+    - name: Setting PGSQL 10 Facts for RHEL 7
+      set_fact:
+        pgsql_version: 10
+        pgsql_pkg_version: 10.16
+        pgsql_repo: https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+      when: pgsql_version == 10 and {{ hostvars[inventory_hostname].ansible_distribution_major_version }} == 7
+    
+    - name: Setting PGSQL 11 Facts for RHEL 7
+      set_fact:
+        pgsql_version: 11
+        pgsql_pkg_version: 11.11
+        pgsql_repo: https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+      when: pgsql_version == 11 and {{ hostvars[inventory_hostname].ansible_distribution_major_version }} == 7
+      
+    - name: Setting PGSQL 12 Facts for RHEL 7
+      set_fact:
+        pgsql_version: 12
+        pgsql_pkg_version: 12.6
+        pgsql_repo: https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+      when: pgsql_version == 12 and {{ hostvars[inventory_hostname].ansible_distribution_major_version }} == 7
+
+    - name: Setting PGSQL 10 Facts for RHEL 8
+      set_fact:
+        pgsql_version: 10
+        pgsql_pkg_version: 10.16
+        pgsql_repo: https://download.postgresql.org/pub/repos/yum/reporpms/EL-8-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+      when: pgsql_version == 10 and {{ hostvars[inventory_hostname].ansible_distribution_major_version }} == 8
+    
+    - name: Setting PGSQL 11 Facts for RHEL 8
+      set_fact:
+        pgsql_version: 11
+        pgsql_pkg_version: 11.11
+        pgsql_repo: https://download.postgresql.org/pub/repos/yum/reporpms/EL-8-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+      when: pgsql_version == 11 and {{ hostvars[inventory_hostname].ansible_distribution_major_version }} == 8
+      
+    - name: Setting PGSQL 12 Facts for RHEL 8
+      set_fact:
+        pgsql_version: 12
+        pgsql_pkg_version: 12.6
+        pgsql_repo: https://download.postgresql.org/pub/repos/yum/reporpms/EL-8-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+      when: pgsql_version == 12 and {{ hostvars[inventory_hostname].ansible_distribution_major_version }} == 8

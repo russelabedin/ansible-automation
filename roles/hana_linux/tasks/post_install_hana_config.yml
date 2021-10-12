@@ -1,0 +1,27 @@
+---
+
+- name: "Copying HANA create script to server"
+  copy:
+    src: "files/{{ hana_create_file }}"
+    dest: "{{ linux_tmp_dir }}/"
+    mode: 0755
+
+- name: "Copying HANA config script to server"
+  copy:
+    src: "files/{{ hana_config_file }}"
+    dest: "{{ linux_tmp_dir }}/"
+    mode: 0755
+
+- name: "Executing OSeries DB creation script"
+  shell: |
+    . ~hxeadm/.bash_profile
+    /usr/sap/HXE/HDB90/exe/hdbsql -i 90 -d systemdb -u {{ hana_user }}  -p "{{ hana_passwd }}" -I {{ linux_tmp_dir }}/{{ hana_create_file }} | tee {{ linux_tmp_dir }}/hana_create.out 
+  become: true
+  become_user: hxeadm
+
+- name: "Executing OSeries DB configuration script"
+  shell: |
+    . ~hxeadm/.bash_profile
+    /usr/sap/HXE/HDB90/exe/hdbsql -i 90 -d oseries -u {{ hana_oseries_user }}  -p "{{ hana_oseries_passwd }}" -I {{ linux_tmp_dir }}/{{ hana_config_file }} | tee {{ linux_tmp_dir }}/hana_config.out
+  become: true
+  become_user: hxeadm

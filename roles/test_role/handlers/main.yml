@@ -1,0 +1,17 @@
+- name: Send an e-mail using SMTP
+  mail:
+    host: smtp.outlook.com
+    port: 587
+    username: cst.build@vertexinc.com
+    password: !vault |
+          $ANSIBLE_VAULT;1.1;AES256
+          38376632313765303537306638356239636336386266393564373339363130323233323231373065
+          3334396637616163646262356439326233646264663036310a616330333431626163303062393737
+          38396462623065646437316165343765326264326363396364623939393330333139316463343339
+          3235623738306639300a383837396538306434663836393264363433346264303261613765303539
+          6661
+    to: rich.dagusto@vertexinc.com
+    subject: Ansible-report
+    body: System has been successfully provisioned.
+    from: cst.build@vertexinc.com
+  delegate_to: localhost

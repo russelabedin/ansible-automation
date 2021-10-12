@@ -1,0 +1,122 @@
+---
+
+  # tasks file for oracle_windows
+#
+# Based on the sql_server version that Rich created
+# Create the default config for a Windows env delivered by CSTI
+- name:
+  include: set_facts.yml
+  when: oracle_version is defined
+
+- name: Ensure user oracle is present
+  win_user:
+    name: "{{ oracle_username }}"
+    password: "{{ oracle_password }}"
+    state: present
+
+# CSTI uses C:\temp\devops as its standard 'temp dir'
+- name: Ensure devops Directory
+  win_file:
+    path: C:\temp\devops
+    state: directory
+
+- name: Ensure Oracle Inventory directory
+  win_file:
+    path: '{{ ORACLE_INVENTORY }}'
+    state: directory
+
+- name: Ensure Oracle Home directory
+  win_file:
+    path: '{{ ORACLE_HOME }}'
+    state: directory
+
+- name: Ensure Oracle Base directory
+  win_file:
+    path: '{{ ORACLE_BASE }}'
+    state: directory
+
+- name: Ensure Oracle data location
+  win_file:
+    path: 'E:\app\{{ oracle_username }}\oradata'
+    state: directory
+
+# Evaluate if Oracle is already installed
+- name: "Confirming that inventory.xml is present"
+  win_stat:
+    path: '{{ ORACLE_INVENTORY }}\ContentsXML\inventory.xml'
+  register: oracle_inventory_xml
+
+# No inventory file means Oracle is not installed
+# 20210114 - determined that oracle_inventory_xml.exists can be used instead of a new fact name oracle_installed
+# - name: Set Fact Oracle Not Installed
+#   set_fact:
+#     oracle_installed: false
+#     key_value: "" # this line is simply a workaround to mute an error msg. See https://github.com/VSChina/vscode-ansible/issues/261
+#   when: not oracle_inventory_xml.stat.exists
+
+# - name: Set Fact Oracle Installed
+#   set_fact:
+#     oracle_installed: true
+#     key_value: "" # this line is simply a workaround to mute an error msg. See https://github.com/VSChina/vscode-ansible/issues/261
+#   when: oracle_inventory_xml.stat.exists
+
+# Look for Oracle version in Oracle inventory.xml.  If the file exists, Oracle is
+# installed.  If the home_list.count is greater than 0, then the target version of
+# Oracle is already installed.
+#
+# This approach is not supported until ansible 2.9
+#
+# - name: "Evaluating Oracle versions in inventory.xml"
+#   block:
+#     - name: "Getting installed version of Oracle"
+#       win_xml:
+#         path: '{{ ORACLE_INVENTORY }}\ContentsXML\inventory.xml'
+#         type: attribute
+#         attribute: 'NAME'
+#         fragment: "{{ ORACLE_HOME_NAME }}"
+#         xpath: //INVENTORY/HOME_LIST/HOME[@NAME]
+#       register: ora_home_list
+#     - debug:
+#         msg: "win_xml returned {{ ora_home_list.msg }}."
+#         verbosity: 3
+#       #when: oracle_inventory_xml.stat.exists
+#     # - name: Setting Oracle Exists fact
+#     #   set_fact:
+#     #     oracle_installed: true
+#     #   when: ora_home_list.count >= 1
+#   when: oracle_inventory_xml.stat.exists
+
+
+
+# The Install Oracle block assumes that the inventory check did not
+  # For first pass/release, the Oracle Client installation is included
+  # in the same Install file as the more general Oracle installation
+- name: "Installing Oracle"
+  include: install_oracle.yml
+  when: not oracle_inventory_xml.stat.exists
+  #when: not oracle_installed
+  register: oracle_db_installed
+
+- name: "Debug oracle_db_installed Registered Variable"
+  debug:
+    var: oracle_db_installed
+
+
+# Verify that the correct version of Oracle has been installed.
+- name: "Validate Oracle installation"
+  win_shell: |
+    sqlplus / as SYSDBA
+  register: sql_output
+  become: true
+  become_user: cstadmin
+  become_method: runas
+
+- name: "Print sqlplus output"
+  debug:
+    var: sql_output
+
+- name: "Configure Oracle"
+  include: post_install_oracle_config.yml
+  # Blocking the when condition to work on the implementation of post_install_oracle
+  #when: not oracle_installed
+  #when: not oracle_db_installed is skipped

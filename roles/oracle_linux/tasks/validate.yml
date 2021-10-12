@@ -1,0 +1,17 @@
+---
+
+# ==> Validating if oracle database is already installed
+- name: Ensuring if oracle database is already installed
+  stat: 
+    path: /u01/app/oracle/product/12.2.0/dbhome_1/bin/sqlplus
+  register: sqlplus
+  become: yes
+
+- debug:
+    msg: "oracle database is already installed here: {{ ORACLE_HOME }}"
+  when: sqlplus.stat.exists
+
+# ==> Setting fact - Oracle database is already installed
+- set_fact:
+    oracle_database_already_installed: yes
+  when: sqlplus.stat.exists

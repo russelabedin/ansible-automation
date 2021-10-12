@@ -1,0 +1,94 @@
+---
+# Install O Series
+- name:
+  include: set_facts.yml
+  when: oracle_version is defined
+
+- name:
+  include: set_facts.yml
+  when: pgsql_version is defined
+
+- name: "Installing O Series - Windows"
+  include: windows_install.yml
+  when: ansible_os_family == "Windows"
+
+- name: "Installing O Series - Linux"
+  include: linux_install.yml
+  when: ansible_os_family != "Windows"
+
+- name: "Patching O Series"
+  include: linux_patch.yml
+  when:  patch_is_set != "none" and ansible_os_family != "Windows"
+
+- name: "Patching O Series"
+  include: windows_patch.yml
+  when: patch_is_set != "none" and ansible_os_family == "Windows"
+
+- name: Set 'vertex90' service automatic and ensure it is started
+  win_service:
+    name: vertex90
+    start_mode: auto
+    state: started
+  when:  ansible_os_family == "Windows"
+
+- name: Print hostname
+  debug:
+    msg: "{{ ansible_facts['fqdn'] }}"
+
+#getting IP address because linux hosts are not in the DNS
+- name: Print hosts IP address
+  debug:
+    msg: "{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}"
+  when: ansible_os_family != "Windows"
+
+- name: Set redirect url for Oauth on Windows
+  win_lineinfile:
+    path: C:\vertex\oseries\config\vertex.cfg
+    state: present
+    insertafter: '^oauth.web_server_redirect_uri='
+    line: "oauth.web_server_redirect_uri=http://{{ ansible_facts['fqdn'] | lower }}:8095/oseries-ui/authorize,http://{{ ansible_facts['fqdn'] | lower }}:8095/ui/authorize"
+  register: config_file
+  when: ansible_os_family == "Windows"
+
+- name: "Restart vertex service - Windows"
+  win_service:
+    name: vertex90
+    state: restarted
+  when: config_file.changed and ansible_os_family == "Windows"
+
+- name: Set redirect url for Oauth on Linux
+  lineinfile:
+    path: /opt/vertex/oseries/config/vertex.cfg
+    state: present
+    insertafter: '^oauth.web_server_redirect_uri='
+    line: "oauth.web_server_redirect_uri=http://{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] | lower }}:8095/oseries-ui/authorize"
+  register: config_file
+  when: ansible_os_family != "Windows"
+
+- name: Ensure firewalld is stopped
+  service:
+    name: firewalld
+    state: stopped
+  become: true
+  when: ansible_os_family != "Windows"
+
+- name: Starting O Series Service
+  shell: 'nohup ./startup.sh'
+  args:
+    chdir: /opt/vertex/oseries/tomcat/bin/
+  become: true
+  when: config_file.changed and ansible_os_family != "Windows"
+
+- name: Wait for port 8095 to become open on the Linux host
+  wait_for:
+    port: 8095
+    delay: 10
+  when: ansible_os_family != "Windows"
+
+- name: "Downloading MDU - Windows"
+  include: mdu_update.yml
+  when: ansible_os_family == "Windows"
+
+- name: "Downloading MDU - Linux"
+  include: linux_mdu.yml
+  when: ansible_os_family != "Windows"

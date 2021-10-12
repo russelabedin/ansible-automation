@@ -1,0 +1,11 @@
+# This is the playbook for setting RHEL system for O Series  
+---
+    - hosts: "{{ host_name }}"
+      user: ansible
+      become: yes
+      connection: ssh
+      gather_facts: yes
+     
+      tasks:
+      - import_role:
+          name: "{{ playbook_dir }}/../roles/vertex_required_linux"

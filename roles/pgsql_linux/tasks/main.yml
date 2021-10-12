@@ -1,0 +1,72 @@
+---
+  - name:
+    include: set_facts.yml
+    when: pgsql_version is defined
+
+  - name: "Add Group: postgres"
+    group: 
+      name: postgres
+  
+  - name: "Add User: {{ pgsql_user }}"
+    user: 
+      name: "{{ pgsql_user }}" 
+      groups: postgres 
+      password: "{{ pgsql_pass }}"
+      state: "{{ usr_state }}"
+      home: /var/lib/pgsql
+      createhome: yes
+  
+  - name: "Deploying pgsql_profile for {{ pgsql_user }}"
+    template: 
+      src: bash_profile.j2
+      dest: "~{{ pgsql_user }}/.pgsql_profile"
+      owner: "{{ pgsql_user }}" 
+      group: "{{ pgsql_user }}"
+      mode: 0777
+  
+  - name: "Deploying pgpass for {{ pgsql_user }}"
+    copy: 
+      src: pgpass 
+      dest: "~{{ pgsql_user }}/.pgpass"
+      owner: "{{ pgsql_user }}" 
+      group: "{{ pgsql_user }}" 
+      mode: 0600
+
+  - name: "Checking PGSQL data directory"
+    stat:
+      path: /u01/PGDATA/A001/
+    register: pgsql_dir
+
+  - name: "Creating Postgres directories"
+    file:
+      path: "{{ item }}"
+      state: "{{ dir_state }}"
+      owner: "{{ pgsql_user }}"
+      group: postgres
+      mode: 0755
+      recurse: yes
+    with_items: 
+      - "{{ pgsql_dirs }}"
+    when: not pgsql_dir.stat.exists
+  
+  - name: "Setting permissions on data directory"
+    file:
+      path: "/var/lib/pgsql/{{ pgsql_version }}/data"
+      owner: "{{ pgsql_user }}"
+      group: postgres
+      mode: 0700
+      recurse: yes
+    when: not pgsql_dir.stat.exists
+  
+  - name: "Check for Postgres install"
+    stat: 
+      path: "/usr/pgsql-{{ pgsql_version }}/bin/pg_ctl"
+    register: pgctl_exists_result
+  
+  - name: "Installing Postgres"
+    include: install_postgres.yml
+    when: not pgctl_exists_result.stat.exists
+  
+  - name: "Configure Postgres"
+    include: post_install_config.yml
+    when: not pgctl_exists_result.stat.exists

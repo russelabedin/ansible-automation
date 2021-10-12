@@ -1,0 +1,43 @@
+# O Series 9.0 Trunk installation on Linux with PGSQL 10, 
+# Amazon Corretto 8 and embedded tomcat
+#
+---
+- name: "Checking for O Series install - Linux"
+  stat:
+    path: /opt/vertex/oseries/bin
+  register: oseries_linux
+
+- name: "Copying O Series installer to local system - Linux"
+  get_url:
+      url: "{{ oseries9_repo_url }}/{{ oseries_base_version }}/{{ o_series_pkg }}"
+      dest: "{{ linux_tmp_dir }}/"
+      mode: 0775
+  when: not oseries_linux.stat.exists
+  
+
+- name: "Copying O Series properties file to local system - Linux"
+  template: 
+    src: "{{ o_series_install_properties_pgsql }}.j2"
+    dest: "{{ linux_tmp_dir }}/{{ o_series_install_properties_pgsql }}"
+    mode: 0775
+  when: not oseries_linux.stat.exists
+
+- name: "Installing O Series application - Linux"
+  shell: '{{ jdk_install_dir }}{{ jdk_pkg}}/bin/java -jar {{ linux_tmp_dir }}/{{ o_series_pkg }} -f {{ linux_tmp_dir }}/{{ o_series_install_properties_pgsql }}'
+  when: not oseries_linux.stat.exists
+
+- name: "Adding license file - Linux"
+  get_url:
+    url: '{{ oseries9_license }}'
+    dest: "{{ vertex_root }}"
+  when: not oseries_linux.stat.exists
+
+- name: "Setting premissions - Linux"
+  file:
+    name: "{{ vertex_root }}/"
+    owner: "oseries"
+    group: "oseries"
+    mode: 0777
+    recurse: true
+    state: "{{ dir_state }}"
+  when: not oseries_linux.stat.exists

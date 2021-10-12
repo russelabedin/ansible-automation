@@ -1,0 +1,4 @@
+set PGPASSWORD={{ db_postgres_pass }}
+{{ PREFIX }}\bin\psql -U {{ db_postgres_user }} -w -f {{ vertex_tmp_dir }}\postgres_create_user_oseries_script.sql
+{{ PREFIX }}\bin\psql -U {{ db_postgres_user }} -w -f {{ vertex_tmp_dir }}\postgres_create_db_script.sql
+{{ PREFIX }}\bin\psql -U {{ db_postgres_user }} -w -c "SELECT pg_reload_conf()"

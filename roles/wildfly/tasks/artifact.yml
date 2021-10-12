@@ -1,0 +1,6 @@
+  
+---
+    # Ansible Playbook to list information 
+    - name: "Validating Wildfly"
+      win_shell: 'dir {{ wildfly_install_base }} >> {{vertex_tmp_dir}}\\{{ vertex_artifact_file }}'
+      ignore_errors: true

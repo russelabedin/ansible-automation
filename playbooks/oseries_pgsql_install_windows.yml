@@ -1,0 +1,16 @@
+---
+# Install Oracle db on Windows host machine.
+- hosts: "{{ host_name }}"
+  gather_facts: yes
+  vars_files:
+    - "{{ playbook_dir }}/../roles/common/windows/vars/main.yml"
+
+  tasks:
+    - import_role:
+        name: "{{ playbook_dir }}/../roles/vertex_required_windows"
+    - import_role:
+        name: "{{ playbook_dir }}/../roles/jdk_windows"
+    - import_role:
+        name: "{{ playbook_dir }}/../roles/pgsql_windows"
+    - import_role:
+        name: "{{ playbook_dir }}/../roles/oseries"

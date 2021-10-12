@@ -1,0 +1,14 @@
+# This is the playbook for installing O Series windows install with SQL Server
+--- 
+    - hosts: windows-{{uid}}
+      gather_facts: yes
+      vars_files:
+        - "{{ playbook_dir }}/../roles/common/windows/vars/main.yml"
+    
+      tasks:
+      - import_role:
+          name: "{{ playbook_dir }}/../roles/vertex_required_windows"
+      - import_role:
+          name: "{{ playbook_dir }}/../roles/jdk_windows"
+      - import_role:
+          name: "{{ playbook_dir }}/../roles/wildfly"

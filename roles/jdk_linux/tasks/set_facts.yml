@@ -1,0 +1,16 @@
+---
+    - name: Setting Amazon Corretto 8 Fact
+      set_fact:
+        jdk_pkg: amazon-corretto-8.265.01.1-linux-x64
+        jdk_version: 8
+        jdk_build: 265.01.1
+        jdk_url: https://binrepo.vtxdev.net/artifactory/software-local/java/Linux/Amazon/amazon-corretto-8.265.01.1-linux-x64.tar.gz
+      when: jdk_version == 8
+    
+    - name: Setting Amazon Corretto 11 Fact
+      set_fact:
+        jdk_pkg: amazon-corretto-11.0.8.10.1-linux-x64
+        jdk_version: 11
+        jdk_build: 8.10.1
+        jdk_url: https://binrepo.vtxdev.net/artifactory/software-local/java/Linux/Amazon/amazon-corretto-11.0.8.10.1-linux-x64.tar.gz
+      when: jdk_version == 11

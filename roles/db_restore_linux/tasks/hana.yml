@@ -1,0 +1,22 @@
+---
+
+- name: Stop db
+  shell: >
+    . ~hxeadm/.bash_profile
+    /usr/sap/HXE/HDB90/exe/hdbsql -i 90 -d systemdb -u {{ hana_db_admin }}  -p "{{ hana_db_admin_pass }}" "ALTER SYSTEM STOP DATABASE {{ db_name }};"
+  become: true
+  become_user: hxeadm
+
+- name: Restore backup
+  shell: >
+    . ~hxeadm/.bash_profile
+    /usr/sap/HXE/HDB90/exe/hdbsql -i 90 -d systemdb -u {{ hana_db_admin }}  -p "{{ hana_db_admin_pass }}" "RECOVER DATA FOR {{ db_name }} USING FILE ('/mnt/backups/{{ backup_file_name }}') CLEAR LOG;"
+  become: true
+  become_user: hxeadm
+
+- name: Start db
+  shell: >
+    . ~hxeadm/.bash_profile
+    /usr/sap/HXE/HDB90/exe/hdbsql -i 90 -d systemdb -u {{ hana_db_admin }}  -p "{{ hana_db_admin_pass }}" "ALTER SYSTEM START DATABASE {{ db_name }};"
+  become: true
+  become_user: hxeadm

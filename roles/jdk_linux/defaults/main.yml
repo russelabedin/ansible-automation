@@ -1,0 +1,3 @@
+---
+    jdk_install_dir: '/opt/java/'
+    linux_tmp_dir: '/tmp/devops/'

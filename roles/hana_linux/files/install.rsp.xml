@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Replace the 3 asterisks with the password -->
+<Passwords>
+    <root_password><![CDATA[Oseries9]]></root_password>
+    <sapadm_password><![CDATA[o9HanaMast]]></sapadm_password>
+    <master_password><![CDATA[Oseries9]]></master_password>
+    <sapadm_password><![CDATA[o9HanaMast]]></sapadm_password>
+    <password><![CDATA[Oseries9]]></password>
+    <system_user_password><![CDATA[Oseries9]]></system_user_password>
+    <streaming_cluster_manager_password><![CDATA[o9HanaStreaming]]></streaming_cluster_manager_password>
+    <ase_user_password><![CDATA[o9HanaAse]]></ase_user_password>
+    <org_manager_password><![CDATA[Oseries9]]></org_manager_password>
+</Passwords>

@@ -1,0 +1,21 @@
+# .bash_profile
+#/home/postgres/.bash_profile
+
+# Get the aliases and functions
+if [ -f ~/.bashrc ]; then
+    . ~/.bashrc
+fi
+
+#POSTGRESQL PATHS
+PATH=$PATH:/usr/pgsql-{{ pgsql_version }}/bin:/usr/pgsql-{{ pgsql_version }}:$HOME/.local/bin:$HOME/bin
+export PATH
+export LD_LIBRARY_PATH=/usr/pgsql-{{ pgsql_version }}/lib
+export PGDATA=/var/lib/pgsql/{{ pgsql_version }}/data
+export PGLOG=$PGDATA/pgstartup.log
+
+#POSTGRESQL ALIAS
+alias pgstart='/usr/pgsql-{{ pgsql_version }}/bin/pg_ctl -D /var/lib/pgsql/{{ pgsql_version }}/data -l /var/lib/pgsql/{{ pgsql_version }}/pgstartup.log -w start'
+alias pgrestart='/usr/pgsql-{{ pgsql_version }}/bin/pg_ctl -D /var/lib/pgsql/{{ pgsql_version }}/data -l /var/lib/pgsql/{{ pgsql_version }}/pgstartup.log -w restart'
+alias pgstop='/usr/pgsql-{{ pgsql_version }}/bin/pg_ctl -D /var/lib/pgsql/{{ pgsql_version }}/data -w stop'
+alias pgstatus='/usr/pgsql-{{ pgsql_version }}/bin/pg_ctl -D /var/lib/pgsql/{{ pgsql_version }}/data status'
+alias pglogtail="tail $PGLOG"

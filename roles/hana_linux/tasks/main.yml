@@ -1,0 +1,23 @@
+---
+
+- name:
+  include: set_facts.yml
+
+- name: "Copying compat-sap-c++-6-6.3.1-1.el7_3.x86_64.rpm"
+  copy:
+    src: compat-sap-c++-6-6.3.1-1.el7_3.x86_64.rpm
+    dest: "{{ linux_tmp_dir }}"
+
+- name: "Installing compat-sap-c++-6-6.3.1-1.el7_3.x86_64.rpm"
+  yum: 
+    name: "{{ linux_tmp_dir }}/compat-sap-c++-6-6.3.1-1.el7_3.x86_64.rpm" 
+
+- name: "Check for HANA install"
+  stat:
+    path: "/hana/shared/HXE/hdblcm/hdblcm"
+  register: hana_exists
+
+- include: install_hana.yml
+  when: not hana_exists.stat.exists
+
+- include: post_install_hana_config.yml

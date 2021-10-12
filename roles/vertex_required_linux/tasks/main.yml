@@ -1,0 +1,56 @@
+#RHEL base configuration setup
+
+---
+- debug:
+    msg: "{{ hostvars[inventory_hostname].ansible_distribution }}"
+- debug:
+    msg: "{{ hostvars[inventory_hostname].ansible_distribution_major_version }}"
+- debug:
+    msg: "{{ hostvars[inventory_hostname].ansible_distribution_version }}"
+
+- name: Subscribing to RedHat
+  include: rhel_subscription.yml
+  when: ansible_distribution == "RedHat"
+
+- name: "Creating users"
+  include_tasks: create_linux_users.yml
+  with_items:
+    - "{{ oseries_users }}"
+  
+- name: "Creating oseries group"
+  group:
+    name: "oseries"
+    state: "{{ grp_state }}"
+  
+- name: "Creating Vertex temp directory"
+  file:
+    name: "{{ vertex_tmp_dir }}"
+    state: "{{ dir_state }}"
+    owner: root
+    group: root
+    mode: 0777
+    path: /tmp
+  
+- name: Creating O Series directories
+  include: oseries_directories_linux.yml
+  when: ansible_distribution != "Windows"
+
+- name: "Installing RHEL specific packages"
+  yum:
+    name: "{{ vertex_rhel_pkgs }}"
+    state: "{{ pkg_state }}"
+  when: ansible_os_family != "Windows"
+
+- name: "Installing System Packages"
+  include_tasks: pkg_install.yml
+  with_items:
+    - "{{ vertex_pkgs }}"
+
+- name: Ensure firewalld is stopped
+  service:
+    name: firewalld
+    state: stopped
+  become: true
+  when: ansible_os_family != "Windows"
+
+#- include: artifact.yml

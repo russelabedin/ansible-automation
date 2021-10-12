@@ -1,0 +1,20 @@
+---
+
+# Here we are installing PostgreSQL database software using win_chocalatey module
+
+- name: Installing Microsoft Visuall C++ as dependent Packages  
+  win_chocolatey:
+    name: 'vcredist2013'
+    state: latest
+    ignore_checksums: yes
+  register: dependent_package_installation
+
+- name: Installing PostgreSQL Packages
+  win_chocolatey:
+    name: 'postgresql{{ pgsql_version }}'
+    state: latest
+    version: "{{ pgsql_pkg_version }}"
+    ignore_checksums: yes
+    package_params: '/Password:{{ db_postgres_pass }}'
+    install_args: '--prefix {{ PREFIX }} --datadir {{ PGDATA }}'
+  register: package_installation

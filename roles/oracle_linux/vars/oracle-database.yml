@@ -1,0 +1,52 @@
+---
+
+# ==> Defining OS level packages that needs to install
+oracle_database_packages_list:
+  - binutils
+  - gcc-c++
+  - glibc-devel
+  - ksh
+  - libX11
+  - libXau
+  - libaio
+  - libaio-devel
+  - libgcc
+  - libxcb
+  - libstdc++
+  - libstdc++-devel
+  - libXi
+  - libXtst
+  - gcc
+  - gcc-c++
+  - libXext
+  - zlib-devel
+  - nfs-utils
+  - smartmontools
+  - unixODBC
+  - unixODBC-devel
+  - libnsl
+
+# ==> Defining kernal parameters that needs to change
+oracle_database_kernel_params:
+  kernel.sem: 250 32000 100 128
+  kernel.shmmni: 4096
+  kernel.shmall: 1073741824
+  kernel.shmmax: 4398046511104
+  kernel.panic_on_oops: 1
+  net.core.rmem_default: 262144
+  net.core.wmem_default: 262144
+  net.core.rmem_max: 4194304
+  net.core.wmem_max: 1048576
+  net.ipv4.tcp_rmem: 4096 87380 16777216
+  net.ipv4.tcp_wmem: 4096 65536 16777216
+  vm.swappiness: 10
+  vm.dirty_background_ratio: 5
+  vm.dirty_ratio: 10
+  fs.file-max: 6815744
+  net.ipv4.tcp_keepalive_time: 300
+  net.ipv4.tcp_keepalive_intvl: 60
+  net.ipv4.tcp_keepalive_probes: 10
+  net.ipv4.conf.all.rp_filter: 2
+  net.ipv4.conf.default.rp_filter: 2
+  fs.aio-max-nr: 1048576
+  net.ipv4.ip_local_port_range: 9000 65500

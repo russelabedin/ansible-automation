@@ -1,0 +1,80 @@
+---
+
+# ==> Setting OS level parameters or configuration
+- include_vars: "oracle-database.yml"
+
+# ==> Install OS level packages
+- name: Installing required OS libraries
+  yum: name={{ oracle_database_packages_list }} state=present
+  ignore_errors: yes
+  
+# ==> Set selinux permissive at OS level
+- name: Setting secure Linux to permissive
+  selinux:
+    policy: targeted
+    state: permissive
+
+# ==> Reload selinux change
+- name: Command to take effect of selinux change
+  command: setenforce Permissive
+
+# ==> Stop and diable firewall on server
+- name: Disabling firewall deamon (firewalld)
+  service: name=firewalld state=stopped enabled=no
+  ignore_errors: yes
+
+# ==> Change kernal parameters required for oracle installation
+- name: Changing OS kernel parameters
+  sysctl:
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+    state: present
+    reload: yes
+  with_dict: "{{ oracle_database_kernel_params }}"
+
+# ==> Adding limit for oracle user at OS level
+- name: Adding limits to the user Oracle User
+  pam_limits:
+    domain: "{{ item.domain }}"
+    limit_type: "{{ item.limit_type }}"
+    limit_item: "{{ item.limit_item }}"
+    value: "{{ item.value }}"
+  loop:
+    - { domain: 'oracle', limit_type: 'soft', limit_item: 'nofile', value: '1024' }
+    - { domain: 'oracle', limit_type: 'hard', limit_item: 'nofile', value: '65536' }
+    - { domain: 'oracle', limit_type: 'soft', limit_item: 'nproc', value: '16384' }
+    - { domain: 'oracle', limit_type: 'hard', limit_item: 'nproc', value: '16384' }
+    - { domain: 'oracle', limit_type: 'soft', limit_item: 'stack', value: '10240' }
+    - { domain: 'oracle', limit_type: 'hard', limit_item: 'stack', value: '32768' }
+    - { domain: 'oracle', limit_type: 'soft', limit_item: 'memlock', value: '134217728' }
+    - { domain: 'oracle', limit_type: 'hard', limit_item: 'memlock', value: '134217728' }
+
+# ==> Creating OS levels groups required for oracle setup
+- name: Creating OS groups for Oracle installation
+  group: name={{ item }} state=present
+  with_items: "{{ oracle_database_groups }}"
+
+# ==> Create Oracle user at OS level
+- name: Creating oracle user
+  user: 
+    state: present
+    append: yes
+    name: "{{ oracle_username }}"
+    group: "{{ UNIX_GROUP_NAME }}"
+    groups: dba,oper
+    password: "{{ oracle_password }}"
+
+# ==> Coping oraInst.loc to /etc path
+- name: "Copying oraInst.loc file"
+  template:
+    src: oraInst.loc
+    dest: /etc
+
+# ==> Ensuring oratab file is created at /etc path
+- name: Ensure oratab file created
+  file:
+    path: /etc/oratab
+    state: touch
+    owner: oracle
+    group: oinstall
+    mode: '0755'

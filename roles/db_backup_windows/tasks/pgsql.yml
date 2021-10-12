@@ -1,0 +1,31 @@
+---
+  - name: Set postgres user name
+    win_environment:
+      state: present
+      name: PGUSER
+      value: "{{ pg_db_user }}"
+      level: user  
+
+  - name: Set postgres password
+    win_environment:
+      state: present
+      name: PGPASSWORD
+      value: "{{ pg_db_pass }}"
+      level: user
+
+  - name: Set postgres db name
+    win_environment:
+      state: present
+      name: PGDATABASE
+      value: "{{ db_name }}"
+      level: user
+
+  - name: Set psql client encoding
+    win_environment:
+      state: present
+      name: PGCLIENTENCODING 
+      value: UTF8
+      level: user
+
+  - name: Create dump file
+    win_shell: "pg_dump -d {{ db_name }} -C -Fp -f {{ backup_path }}\\{{ backup_file_name }}.dump"

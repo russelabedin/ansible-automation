@@ -1,0 +1,96 @@
+---
+
+# - name: Ensure user oracle is present
+#   win_user:
+#     name: "{{ oracle_username }}"
+#     password: "{{ oracle_password }}"
+#     state: present
+
+- name: "Checking for Oracle Installer zip"
+  win_stat:
+    path: '{{ vertex_tmp_dir }}\{{ oracle_install_pkg }}'
+  register: ora_installer_downloaded
+
+- name: Disply the URL for Artifactory
+  debug:
+    msg: "{{ vertex_repo_url }}/{{ ora_repo_base_dir }}/{{ oracle_release }}/{{ oracle_install_pkg }}"
+    verbosity: 3
+
+
+- name: "Downloading {{ oracle_install_pkg }}"
+  win_get_url:
+    url: "{{ vertex_repo_url }}/{{ ora_repo_base_dir }}/{{ oracle_release }}/{{ oracle_install_pkg }}"
+    dest: '{{ vertex_tmp_dir }}\'
+  register: get_oracle
+  when: not ora_installer_downloaded.stat.exists
+
+- name: "Checking for unzipped Oracle Installer"
+  win_stat:
+    # path: '{{ win_unzip_dest }}'
+    path: '{{ oracle_setup_exe_location }}\setup.exe'
+  register: ora_installer_unzipped
+
+# Try replacing the unzip with a powershell cmd https://stackoverflow.com/a/44499662/2336451
+# - name: "Unzipping the Oracle install file"
+#   win_shell: "Expand-Archive {{ vertex_tmp_dir }}\\{{ oracle_install_pkg }} -DestinationPath {{ ORACLE_HOME }}"
+#   when: not ora_installer_unzipped.stat.exists
+
+
+- name: "Unzipping the Oracle install file"
+  win_unzip:
+    src: '{{ vertex_tmp_dir }}\{{ oracle_install_pkg }}'
+    # dest: '{{ vertex_tmp_dir }}\database'
+    dest: '{{ ORACLE_HOME }}'
+    #remote_src: true
+  when: not ora_installer_unzipped.stat.exists
+
+- name: "Checking for rsp install file"
+  win_stat:
+    path: '{{ vertex_tmp_dir }}\{{ oracle_install_rsp }}'
+  register: ora_rsp_copied
+
+- name: "Copying install rsp file"
+  win_template:
+    src: "{{ oracle_install_rsp }}.j2"
+    # src: oracle12_advanced_install.rsp.j2
+    dest: '{{ vertex_tmp_dir }}\{{ oracle_install_rsp }}'
+  when: not ora_rsp_copied.stat.exists
+
+
+- name: "Copying install bat file"
+  win_template:
+    src: install_oracle12c.bat.j2
+    # src: install_oracle18.bat.j2
+    dest: '{{ vertex_tmp_dir }}\install_oracle.bat'
+
+- name: Add Oracle Inventory registry for 18.3 installation only
+  win_regedit:
+    path: HKLM:\SOFTWARE\ORACLE
+    name: inst_loc
+    data: '{{ ORACLE_INVENTORY }}'
+  become: true
+  become_user: cstadmin
+  become_method: runas
+  when: oracle_version == '18.3'
+
+# - name: "Determining the type of token"
+#   win_whoami:
+
+- name: "Executing the Oracle Install bat script"
+  win_shell: '{{ vertex_tmp_dir }}\install_oracle.bat'
+  args:
+    executable: cmd
+    become: true
+    become_user: cstadmin
+    become_method: runas
+  register: install_bat_out
+
+- name: "Oracle Installer bat stdout"
+  debug:
+    var: install_bat_out.stdout
+    verbosity: 2
+
+- name: "Oracle Installer bat install time"
+  debug:
+    msg: "Oracle installed in: {{ install_bat_out.delta }}"
+

@@ -1,0 +1,23 @@
+import-module sqlps;
+$MachineObject = new-object ('Microsoft.SqlServer.Management.Smo.WMI.ManagedComputer') "{{ ansible_facts['hostname'] }}"
+$instance = $MachineObject.getSmoObject(
+   "ManagedComputer[@Name='{{ ansible_facts['hostname'] }}']/" + 
+   "ServerInstance[@Name='OSERIES']"
+)
+
+$instance.ServerProtocols['Tcp'].IPAddresses['IPAll'].IPAddressProperties['TcpPort'].Value = "1433"
+$instance.ServerProtocols['Tcp'].IPAddresses['IPAll'].IPAddressProperties['TcpDynamicPorts'].Value = ""
+$instance.ServerProtocols['Tcp'].Alter()
+
+$smo = 'Microsoft.SqlServer.Management.Smo.'  
+$wmi = new-object ($smo + 'Wmi.ManagedComputer').  
+
+# List the object properties, including the instance names.  
+$Wmi  
+
+# Enable the TCP protocol on the default instance.  
+$uri = "ManagedComputer[@Name='{{ ansible_facts['hostname'] }}']/ ServerInstance[@Name='OSERIES']/ServerProtocol[@Name='Tcp']"  
+$Tcp = $wmi.GetSmoObject($uri)  
+$Tcp.IsEnabled = $true  
+$Tcp.Alter()  
+$Tcp

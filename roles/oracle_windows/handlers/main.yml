@@ -1,0 +1,7 @@
+---
+# handlers file for oracle_windows
+- name: reboot server
+  win_reboot:
+    msg: Reboot initiated by Ansible
+    post_reboot_delay: 180
+  register: reboot

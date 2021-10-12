@@ -1,0 +1,71 @@
+---
+  - name: "Initializing Postgres repo"
+    yum:
+      name: "{{ pgsql_repo }}"
+      state: "{{ pkg_state }}"
+  
+  - name: Disabling Postgres module from appstream for RHEL 8
+    command: "{{ item }}"
+    with_items: 
+      - yum -qy module enable postgresql
+      - yum -qy module disable postgresql
+    become: true
+    when: ansible_distribution_major_version == "8"
+
+  - name: "installing  yum install postgresql{{ pgsql_version }}-libs-{{ pgsql_pkg_version }}"
+    yum:
+      name: "postgresql{{ pgsql_version }}-libs-{{ pgsql_pkg_version }}"
+      state: "{{ pkg_state }}"
+      allow_downgrade: yes
+  
+  - name: "Installing Postgres"
+    yum:
+      name: "{{ item }}"
+      state: "{{ pkg_state }}"
+      allow_downgrade: yes
+    with_items:
+      - "{{ pgsql_pkgs }}"
+  
+  - name: "Initializing Postgres"
+    shell: "/usr/pgsql-{{ pgsql_version }}/bin/initdb -D /var/lib/pgsql/{{ pgsql_version }}/data && sleep 10"
+    become: true
+    become_user: "{{ pgsql_user }}"
+      
+  - name: "Starting Postgres"
+    command: "/usr/pgsql-{{ pgsql_version }}/bin/pg_ctl -D /var/lib/pgsql/{{ pgsql_version }}/data -l /var/lib/pgsql/{{ pgsql_version }}/data/pgstartup.log -w start"
+    become: true
+    become_user: "{{ pgsql_user }}"
+  
+  - name: "Restarting Postgres"
+    command: "/usr/pgsql-{{ pgsql_version }}/bin/pg_ctl -D /var/lib/pgsql/{{ pgsql_version }}/data -l /var/lib/pgsql/{{ pgsql_version }}/data/pgstartup.log -w restart"
+    become: true
+    become_user: "{{ pgsql_user }}"
+  
+  - name: "Postgres User Change Password"
+    shell:  |
+      /usr/pgsql-{{ pgsql_version }}/bin/psql -c "ALTER USER postgres PASSWORD '{{ pgsql_passwd }}';"
+    become: true
+    become_user: "{{ pgsql_user }}"
+  
+  - name: "Install Adminpak"
+    shell: |
+      /usr/pgsql-{{ pgsql_version }}/bin/psql -c "CREATE EXTENSION adminpack;"
+    become: true
+    become_user: "{{ pgsql_user }}"
+  
+  - name: "Install /var/lib/pgsql/{{ pgsql_version }}/data/pg_hba.conf"
+    template: 
+      src: pg_hba.conf.j2 
+      dest: "/var/lib/pgsql/{{ pgsql_version }}/data/pg_hba.conf"
+  
+  - name: "Install /var/lib/pgsql/9.6/data/postgresql.conf"
+    template: 
+      src: postgresql.conf.j2 
+      dest: "/var/lib/pgsql/{{ pgsql_version }}/data/postgresql.conf"
+  
+  - name: "Install /usr/lib/tmpfiles.d/postgres.conf"
+    template: 
+      src: postgres.conf.j2 
+      dest: /usr/lib/tmpfiles.d/postgres.conf
+    when: (ansible_distribution == "CentOS" and ansible_distribution_major_version == "7") or
+                (ansible_distribution == "RedHat" and ansible_distribution_major_version == "7")

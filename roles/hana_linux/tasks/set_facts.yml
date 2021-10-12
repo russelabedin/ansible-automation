@@ -1,0 +1,36 @@
+---
+
+# ==> Set facts for Artifactory location
+- name: Overridding of vars from common
+  set_fact:
+    db_version: Oracle
+    vertex_repo_url: 'http://binrepo.cst.vertexinc.com:80/artifactory/software-remote'
+    key_value: "" # this line is simply a workaround to mute an error msg. See https://github.com/VSChina/vscode-ansible/issues/261
+
+# ==> Set facts for Oracle 12.2 version
+- name: Setting Hana database Facts
+  set_fact:
+    hana_repo_base_dir: SAP_HANA/2.0%20Express%20Installer
+    hana_install_pkg: hxe.tgz
+    hana_user: system
+    hana_passwd: !vault |
+          $ANSIBLE_VAULT;1.1;AES256
+          66653636303034613539353433633064626365623365323839386465336164343634366533326638
+          6634303032376239353737313632336538623839373832650a653463373033333065393431643834
+          34316133306334356265656436393462343064396538313637616434323739643836383465643835
+          3835653436323638310a326134333763373539383930333163653335383062383935313032663563
+          6563
+    hana_oseries_user: system
+    hana_oseries_passwd: !vault |
+          $ANSIBLE_VAULT;1.1;AES256
+          66653636303034613539353433633064626365623365323839386465336164343634366533326638
+          6634303032376239353737313632336538623839373832650a653463373033333065393431643834
+          34316133306334356265656436393462343064396538313637616434323739643836383465643835
+          3835653436323638310a326134333763373539383930333163653335383062383935313032663563
+          6563
+    hana_create_file: HANA_Create_OSeries_DB.sql
+    hana_config_file: HANA_Config_OSeries_DB.sql
+    hana_response_file: install.rsp
+    hana_response_xml: install.rsp.xml
+    hana_home_dir: /opt/media
+  when: db_type == 'hana'

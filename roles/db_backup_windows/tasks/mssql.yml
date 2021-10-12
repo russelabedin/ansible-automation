@@ -1,0 +1,37 @@
+---
+  - name: Creat temp directory
+    win_file:
+      path: "{{ temp_backup_path }}"
+      state: directory
+
+  - name: Install the SqlServer module
+    win_shell: Install-Module -Name SqlServer
+    ignore_errors: yes
+
+  - name: Creat temp directory
+    win_file:
+      path: "{{ temp_backup_path }}"
+      state: directory
+
+  - name: Create MS SQL database backup
+    win_shell: >
+      $UserName = "{{ mssql_db_user }}";
+      $pass= ConvertTo-SecureString {{ mssql_db_pass }} -AsPlainText -Force;
+      $SQLcreds =  New-Object -TypeName PSCredential -ArgumentList $UserName, $pass;
+      Backup-SqlDatabase -ServerInstance '.' -Database "{{ db_name }}" -CompressionOption on -BackupFile {{ temp_backup_path }}\{{ backup_file_name }}.bak -Credential $SQLcreds
+
+  - name: Copy backup file from local drive to a network share
+    win_copy:
+      remote_src: yes
+      src: "{{ temp_backup_path }}\\{{ backup_file_name }}.bak"
+      dest: "{{ backup_path }}"
+    become: yes
+    become_user: "{{ fs_login }}"
+    become_method: runas
+    vars:
+      ansible_become_password: "{{ fs_pass }}"
+
+  - name: Remove temp file
+    win_file:
+      path: "{{ temp_backup_path }}\\{{ backup_file_name }}.bak"
+      state: absent

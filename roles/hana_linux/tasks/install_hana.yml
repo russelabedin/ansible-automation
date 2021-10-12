@@ -1,0 +1,41 @@
+---
+
+# Eric Shigo - Coda Global
+#
+- name: "Creating HANA directories"
+  file:
+    path: "{{ item }}"
+    state: "{{ dir_state }}"
+    owner: root
+    group: root
+  with_items:
+    - "{{ hana_home_dir }}"
+
+- name: "Downloading HANA media"
+  get_url:
+    url:  '{{ vertex_repo_url }}/{{ hana_repo_base_dir }}/{{ hana_install_pkg }}'
+    dest: "{{ linux_tmp_dir }}/"
+
+- name: "Extracting {{ hana_install_pkg }}"
+  unarchive:
+    src: "{{ linux_tmp_dir }}/{{ hana_install_pkg }}"
+    dest: "{{ hana_home_dir }}/"
+    remote_src: true
+
+- name: "Copying response files"
+  copy:
+    src: "{{ item }}"
+    dest: "{{ linux_tmp_dir }}/"
+    owner: root
+    group: root
+  with_items:
+    - install.rsp
+    - install.rsp.xml
+
+- name: "Setting up HANA"
+  shell: | 
+    cat {{ linux_tmp_dir }}/install.rsp.xml | {{ hana_home_dir }}/HANA_EXPRESS_20/DATA_UNITS/HDB_LCM_LINUX_X86_64/hdblcm --read_password_from_stdin=xml --configfile={{ linux_tmp_dir }}/install.rsp -b --ignore=check_min_mem | tee {{ linux_tmp_dir }}/hana_install.out
+  become: true
+  become_user: root
+  async: 12600
+  poll: 120

@@ -1,0 +1,93 @@
+---
+- name:
+  include: set_facts.yml
+  when: mssql_version is defined
+
+- name: Ensure devops Directory
+  win_file:
+    path: c:\temp\devops
+    state: directory
+
+- name: "Copying install ini file"
+  win_template:
+    src: "{{ mssql_install_ini }}.j2"
+    dest: '{{ vertex_tmp_dir }}\mssql_install.ini'
+  register: install_file
+
+#### Discovery
+- debug:
+    msg:
+      - "detected change in install file"
+  when: install_file.changed
+
+- name: "Checking for Sql Server Management Studio"
+  win_shell: choco list --local-only sql-server-management-studio
+  register: choco_results
+  changed_when: choco_results.rc == 2
+
+- name: "Checking for MSSQL Server install"
+  win_stat:
+    path: '"C:\Program Files\Microsoft SQL Server\Client SDK\ODBC"'
+  register: mssql_exists
+
+####
+- include: dotnet.yml
+  when: mssql_version ==  2014
+
+#### Run Install when MSSQL has not yet been installed OR when mssql.ini file has changed
+- name: "Installing MSSQL Server"
+  include: install.yml
+  when: not mssql_exists.stat.exists
+
+#### Oseries database installation (flag is true) ###
+- block:
+
+  - name: "Checking for MSSQL oseries database"
+    win_stat:
+      path: '"E:\MSSQL\Data\oseries.mdf"'
+      get_checksum: "false"
+    register: oseries_db
+
+  - name: "Configuring OSERIES Server"
+    include: config.yml
+    when: not oseries_db.stat.exists
+
+  - name: Disable MSSQL Services
+    debug:
+      msg: "Disabling MSSQL Services"
+    notify: Disable MSSQL services
+    changed_when: true
+    when: install_file.changed
+
+  - name: Start oseries MSSQL services
+    debug:
+      msg: "Starting OSERIES Services"
+    notify: Start OSERIES services
+    changed_when: true
+    when: install_file.changed
+
+  when: oseries_flag
+
+- debug:
+    msg: 
+      - "Package Install results are {{ choco_results.stdout }}"
+      - "mssql Version is {{ mssql_version }}"
+
+- name: "Installing Sql Server Management Studio"
+  win_chocolatey:
+    name: sql-server-management-studio
+    state: "{{ pkg_state }}"
+  when: choco_results.stdout is search('0 packages installed') and mssql_version != 2014
+  register: sql_mgt_installed
+  notify: reboot server
+
+- name: stat check on oseries flag change
+  debug:
+    msg:
+      - Rebooting server due to oseries flag change
+  when: install_file.changed and not sql_mgt_installed.changed
+  notify: reboot server
+  changed_when: true
+
+- name: Force all notified handlers to run at this point, not waiting for normal sync points
+  meta: flush_handlers

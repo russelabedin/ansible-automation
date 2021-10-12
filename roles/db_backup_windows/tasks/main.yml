@@ -1,0 +1,31 @@
+---
+
+# - name: Check that backup doesn`t exist
+#   win_stat:
+#     path: "{{ item }}"
+#   with_items:
+#       - "{{ backup_path }}\\{{ backup_file_name }}"
+#       - "{{ backup_path }}\\{{ backup_file_name }}.bak"
+#       - "{{ backup_path }}\\{{ backup_file_name }}.dmp"
+#   register: backup
+
+# - name: Fail if backup alredy exist
+#   fail:
+#       msg: "Backup file with that name already exist"
+#   with_items: "{{ backup.results }}"
+#   when: item.stat.exists
+
+- name: Set facts for DB backup and Restore
+  include: set_facts.yml
+  
+- include: db2.yml
+  when: db_type == "db2"
+
+- include: mssql.yml
+  when: db_type == "mssql"
+
+- include: oracle.yml
+  when: db_type == "oracle"
+
+- include: pgsql.yml
+  when: db_type == "pgsql"

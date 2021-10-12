@@ -1,0 +1,83 @@
+---
+  - name: Check that temp files from previous run were removed 
+    win_file:
+      path: '{{ item }}'
+      state: absent
+    with_items:
+      - "{{ temp_backup_path }}\\{{ backup_file_name }}.dmp"
+      - "{{ temp_backup_path }}\\{{ db_name }}.log"
+      - "{{ setup_script_path }}"
+      - "{{ cleanup_script_path }}"
+
+  - name: Creat temp directory
+    win_file:
+      path: "{{ temp_backup_path }}"
+      state: directory
+
+  - name: Create file for setup script
+    win_file:
+      path: "{{ setup_script_path }}"
+      state: touch
+
+  - name: Insert setup script
+    win_lineinfile:
+      path: "{{ setup_script_path }}"
+      state: present
+      line: "create or replace directory data_pump_dir_pdb as '{{ temp_backup_path }}';\r\nexit;"
+
+  - name: Create directory to perform expdp
+    win_shell: "sqlplus {{ ora_db_admin }}/{{ ora_db_admin_pass }} @{{ setup_script_path }}"
+
+  - name: Copy dump to local temp directory
+    win_copy:
+      remote_src: yes
+      src: "{{ backup_path }}\\{{ backup_file_name }}.dmp"
+      dest: "{{ temp_backup_path }}\\"
+    become: yes
+    become_user: "{{ fs_login }}"
+    become_method: runas
+    vars:
+      ansible_become_password: "{{ fs_pass }}"
+
+  - name: "Copying startup db script file"
+    win_template:
+      src: files/oracle_startup_db_script.sql
+      dest: '{{ vertex_tmp_dir }}\oracle_startup_db_script.sql'
+
+  - name: "Copying shutdown DB script file"
+    win_template:
+      src: files/oracle_shutdown_db_script.sql
+      dest: '{{ vertex_tmp_dir }}\oracle_shutdown_db_script.sql'
+
+  - name: Create file for cleanup script
+    win_file:
+      path: "{{ cleanup_script_path }}"
+      state: touch
+
+  - name: Insert cleanup script
+    win_lineinfile:
+      path: "{{ cleanup_script_path }}"
+      state: present
+      line: "drop user {{ db_name }} cascade;\r\nexit;"
+
+  - name: Shutdown Database
+    win_shell: sqlplus {{ ora_db_admin }} as sysdba/{{ ora_db_admin_pass }} @{{ vertex_tmp_dir }}\oracle_shutdown_db_script.sql
+
+  - name: Startup Database
+    win_shell: sqlplus {{ ora_db_admin }} as sysdba/{{ ora_db_admin_pass }} @{{ vertex_tmp_dir }}\oracle_startup_db_script.sql
+
+  - name: Run cleanup script
+    win_shell: "sqlplus {{ ora_db_admin }}/{{ ora_db_admin_pass }} @{{ cleanup_script_path }}"
+
+  - name: Restore dump file
+    win_shell: "impdp {{ ora_db_admin }}/{{ ora_db_admin_pass }}@{{ ora_service_name }} schemas={{ db_name }} directory=data_pump_dir_pdb dumpfile={{ backup_file_name }}.dmp logfile={{ db_name }}.log"
+
+  - name: Remove temp files
+    win_file:
+      path: '{{ item }}'
+      state: absent
+    with_items:
+      - "{{ temp_backup_path }}\\{{ backup_file_name }}.dmp"
+      - "{{ temp_backup_path }}\\{{ db_name }}.log"
+      - "{{ setup_script_path }}"
+      - "{{ cleanup_script_path }}"

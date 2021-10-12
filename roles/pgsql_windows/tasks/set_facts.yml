@@ -1,0 +1,33 @@
+---
+
+#Here we are deciding which PostgreSQL database version to install and set variables accordingly
+
+- name: Setting PGSQL 9 Facts for Windows
+  set_fact:
+    pgsql_version: 9
+    pgsql_pkg_version: 9.6.21.1
+  when: pgsql_version == 9
+
+- name: Setting PGSQL 10 Facts for Windows
+  set_fact:
+    pgsql_version: 10
+    pgsql_pkg_version: 10.16.1
+  when: pgsql_version == 10
+
+- name: Setting PGSQL 11 Facts for Windows
+  set_fact:
+    pgsql_version: 11
+    pgsql_pkg_version: 11.11.1
+  when: pgsql_version == 11
+
+- name: Setting PGSQL 12 Facts for Windows
+  set_fact:
+    pgsql_version: 12
+    pgsql_pkg_version: 12.6.1
+  when: pgsql_version == 12
+  
+- name: Setting PGSQL 13 Facts for Windows
+  set_fact:
+    pgsql_version: 13
+    pgsql_pkg_version: 13.2.1
+  when: pgsql_version == 13

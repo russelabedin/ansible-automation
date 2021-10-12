@@ -1,0 +1,10 @@
+---
+- name: "Downloading .net framework"
+  win_get_url:  
+    url: "{{ vertex_repo_url }}/{{ dotnet_pkg_base_dir }}/{{ dotnet_pkg }}"
+    dest: "{{ vertex_tmp_dir }}"
+
+- name: "Installing .net framework"
+  win_shell: |
+    powershell "Install-WindowsFeature Net-Framework-Core -source {{ vertex_tmp_dir }}\{{ dotnet_pkg }}"
+

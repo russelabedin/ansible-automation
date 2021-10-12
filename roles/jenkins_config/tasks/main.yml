@@ -1,0 +1,60 @@
+---
+- name: Post New Job
+  win_uri:
+    url: 'http://{{ host_name }}:8080/createItem?name={{ item.name }}'
+    user: "{{ user }}"
+    password: "{{ password }}"
+    method: POST
+    body: "{{ item.payload }}"
+    force_basic_auth: "yes"
+    content_type: "application/xml"
+    return_content: "yes"
+    creates: 'C:\Program Files (x86)\Jenkins\jobs\{{ item.name }}\nextBuildNumber'
+  with_items: "{{ jenkin_jobs }}"
+
+- win_get_url:
+    url: 'http://{{ host_name }}:8080/jnlpJars/jenkins-cli.jar'
+    dest: "{{ vertex_scripts_dir }}"
+
+# - name: "Install Windows Packages"
+#   win_package: 
+#     path: https://javadl.oracle.com/webapps/download/AutoDL?BundleId=243735_61ae65e088624f5aaa0b1d2d801acb16/jre-8u271-windows-i586.exe
+#     state: present
+
+### Command that lists installed plugins, useful in log output only
+- name: CLI Command
+  win_shell: "{{ jenkins_cli_cmd }} -s http://{{ host_name }}:8080/ -auth {{ user }}:{{ password }} {{ item }}"
+  args:
+    chdir: C:\scripts
+  with_items:
+    - "list-plugins"
+
+- name: "Copying Credentials xml file"
+  win_template:
+    src: "vsphere_creds.xml.j2"
+    dest: 'C:\scripts\vsphere_creds.xml'
+  
+- name: Install Plugins
+  win_shell: "{{ jenkins_cli_cmd }} -s http://{{ host_name }}:8080/ -auth {{ user }}:{{ password }} install-plugin {{ item }}"
+  args:
+    chdir: C:\scripts
+  with_items:
+    - "python"
+    - "htmlpublisher"
+  register: plugin_state
+
+- name: Install requests module
+  win_shell: "pip install requests"
+  args:
+    chdir: C:\scripts
+
+- name: Configure Jenkins Credentials
+  win_command: "cmd.exe /c {{ jenkins_cli_cmd }} -s http://{{ host_name }}:8080/ -auth {{ user }}:{{ password }} import-credentials-as-xml system::system::jenkins < {{ item }}"
+  args:
+    chdir: C:\scripts
+  with_items:
+    - "vsphere_creds.xml"
+
+- name: Reboot when plugin installed
+  win_reboot:
+  when: plugin_state.changed

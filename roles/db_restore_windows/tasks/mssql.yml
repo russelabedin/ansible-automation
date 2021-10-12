@@ -1,0 +1,33 @@
+---
+  - name: Install the SqlServer module
+    win_shell: Install-Module -Name SqlServer
+    ignore_errors: yes
+
+  - name: Create temp directory
+    win_file:
+      path: "{{ temp_backup_path }}"
+      state: directory
+
+  - name: Cleanup a temporary folder on a local drive
+    win_shell: Remove-Item -Path {{ temp_backup_path }}\* -Recurse -Force  
+
+  - name: Copy backup file from network share to local drive
+    win_shell: "Copy-Item -Path {{ backup_path }}\\{{ backup_file_name }}.bak -Destination {{ temp_backup_path }}"
+    become: yes
+    become_user: "{{ fs_login }}"
+    become_method: runas
+    vars:
+      ansible_become_password: "{{ fs_pass }}"
+
+  - name: Set database offline 
+    win_shell: Invoke-Sqlcmd -ServerInstance '.' -Database "{{ db_name }}" -Query "alter database {{ db_name }} set offline with rollback immediate" -Username "{{ mssql_db_user }}" -Password "{{ mssql_db_pass }}"
+
+  - name: Restore MS SQL database from backup
+    win_shell: >
+      $UserName = "{{ mssql_db_user }}";
+      $pass= ConvertTo-SecureString {{ mssql_db_pass }} -AsPlainText -Force;
+      $SQLcreds =  New-Object -TypeName PSCredential -ArgumentList $UserName, $pass;
+      Restore-SqlDatabase -ServerInstance '.' -Database "{{ db_name }}" -BackupFile {{ temp_backup_path }}\{{ backup_file_name }}.bak -Credential $SQLcreds
+
+  - name: Set database online
+    win_shell: Invoke-Sqlcmd -ServerInstance '.' -Query "alter database {{ db_name }} set online" -Username "{{  mssql_db_user }}" -Password "{{ mssql_db_pass }}"

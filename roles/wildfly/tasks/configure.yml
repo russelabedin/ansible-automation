@@ -1,0 +1,23 @@
+---
+  - name: "Setting WildFly_HOME to {{ wildfly_install_base }}\\{{ wildfly_dir }}"
+    win_path:
+      name: WildFly_HOME
+      elements: "{{ wildfly_install_base }}\\{{ wildfly_dir }}"
+  
+  - name: "Setting WildFly windows service script"
+    win_copy:
+      src: "{{ wildfly_install_base }}\\{{ wildfly_dir }}\\docs\\contrib\\scripts\\service\\"
+      dest: "{{ wildfly_install_base }}\\{{ wildfly_dir }}\\bin\\service\\"
+      remote_src: True
+  
+  - name: "Installng WildFly as Windows Service"
+    win_command: "{{ wildfly_install_base }}\\{{ wildfly_dir }}\\bin\\service\\service.bat install"
+  
+  - name: "Starting WildFly Windows service"
+    win_service:
+      name: Wildfly
+      start_mode: auto
+      state: started
+  
+  - name: "Adding WildFly user account"
+    win_command: "{{ wildfly_install_base }}\\{{ wildfly_dir }}\\bin\\add-user.bat -u vertex -p vertex"

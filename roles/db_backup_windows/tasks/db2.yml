@@ -1,0 +1,43 @@
+---
+  - name: Create backup folder
+    win_file:
+      path: "{{ temp_backup_path }}\\{{ backup_file_name }}"
+      state: directory
+
+  - win_shell: db2cmd -i -w db2clpsetcp
+    register: db2clp_output
+
+  - name: Init DB2 env
+    win_environment:
+      name: DB2CLP
+      value: "{{ db2clp_output.stdout_lines[1].split('=')[1] }}"
+      level: machine
+      state: present
+
+  - win_shell: db2 force application all
+  - win_shell: db2 deactivate database {{ db_name }}
+  - win_shell: db2stop force
+  - win_shell: db2start ADMIN MODE RESTRICTED ACCESS
+  - win_shell: db2 backup database {{ db_name }} to {{ temp_backup_path }}\{{ backup_file_name }}
+
+  - name: Del DB2 env var
+    win_environment:
+      name: DB2CLP
+      level: machine
+      state: absent
+
+  - name: Copy backup to network share
+    win_copy:
+      remote_src: yes
+      src: "{{ temp_backup_path }}\\{{ backup_file_name }}"
+      dest: "{{ backup_path }}"
+    become: yes
+    become_user: "{{ fs_login }}"
+    become_method: runas
+    vars:
+      ansible_become_password: "{{ fs_pass }}"
+
+  - name: Cleanup temp folder
+    win_file:
+      path: "{{ temp_backup_path }}\\{{ backup_file_name }}"
+      state: absent
