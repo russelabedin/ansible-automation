@@ -1,3 +1,0 @@
-temp_backup_path: "C:\\temp\\backup"
-setup_script_path: "C:\\temp\\setup_script.sql"
-cleanup_script_path: "C:\\temp\\cleanup_script.sql"

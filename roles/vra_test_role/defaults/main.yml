@@ -1,5 +1,0 @@
----
-pkg_state: present
-dir_state: directory
-usr_state: present
-grp_state: present

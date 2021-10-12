@@ -1,6 +1,6 @@
 ---
 
-# Eric Shigo - Coda Global
+# 
 #
 - name: "Creating HANA directories"
   file:

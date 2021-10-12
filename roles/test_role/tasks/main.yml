@@ -1,7 +1,0 @@
----
-- name: "Download Test"
-  win_get_url:  
-    url: "{{ vertex_repo_url }}/{{ mssql_iso_base_dir }}/{{ mssql_iso_pkg }}"
-    dest: "{{ vertex_tmp_dir }}"
-    force: no
-    timeout: 0
