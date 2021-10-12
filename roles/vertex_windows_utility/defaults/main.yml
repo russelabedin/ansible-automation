@@ -1,7 +1,0 @@
----
-vertex_dir_state: directory
-powershell_pkg: PowerShell-7.0.3-win-x64.msi
-util_pkgs:
-    - { name: jenkins, version: 2.222.4 }
-    - { name: python3, version: 3.9.0 }
-    - { name: jdk8, version: 8.0.211}

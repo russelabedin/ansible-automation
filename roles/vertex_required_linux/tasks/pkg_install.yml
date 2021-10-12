@@ -1,7 +1,0 @@
----
-- name: "Installing packge {{ item }}"
-  yum:
-    name: "{{ item }}"
-    state: "{{ pkg_state }}"
-#  ignore_errors: yes
-  when: ansible_os_family != "Windows"
